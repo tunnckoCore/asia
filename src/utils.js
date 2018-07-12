@@ -123,7 +123,7 @@ function getCodeInfo({ parsedArgv = {}, content, filename, err }) {
     /* istanbul ignore next */
     const source = content || fs.readFileSync(filename, 'utf-8');
     const opts = {
-      highlightCode: parsedArgv.colors,
+      highlightCode: parsedArgv.color,
       message: firstLine,
     };
 
