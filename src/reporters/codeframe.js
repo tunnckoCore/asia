@@ -2,6 +2,8 @@
 
 const utils = require('../utils');
 
+// TODO: finish it!
+
 module.exports = ({ ansi, parsedArgv }) => ({
   name: 'codeframe',
   pass({ filename }, { skip, title }) {
@@ -14,6 +16,8 @@ module.exports = ({ ansi, parsedArgv }) => ({
         'at',
         ansi.green(relativePath),
       );
+    } else if (!skip) {
+      console.log('pass:', title);
     }
   },
   fail({ content, filename }, { title, reason: err }) {

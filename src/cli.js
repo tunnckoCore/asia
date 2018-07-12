@@ -13,35 +13,25 @@ const utils = require('./utils');
 const parsedArgv = utils.getParsedArgv(proc);
 ansi.enabled = parsedArgv.colors;
 
+proc.env.ASIA_ARGV = JSON.stringify(parsedArgv);
+proc.env.ASIA_CLI = true;
+
 const input = arrayify(
   parsedArgv._.length > 0 ? parsedArgv._ : parsedArgv.input,
 );
-
-proc.env.ASIA_CLI = true;
-proc.env.ASIA_ARGV = JSON.stringify(parsedArgv);
 
 const requires = arrayify(parsedArgv.require).reduce(
   (acc, req) => acc.concat('--require', req),
   [],
 );
 
-const isInstalled = (name) => {
-  try {
-    // eslint-disable-next-line global-require, import/no-dynamic-require
-    require(name);
-  } catch (err) {
-    return false;
-  }
-  return true;
-};
-
 // add the specific loaders before any other given `--require`s
 if (!parsedArgv.cjs) {
-  if (isInstalled('esm')) {
+  if (utils.isInstalled('esm')) {
     requires.unshift('--require', 'esm');
-  } else if (isInstalled('@babel/register')) {
+  } else if (utils.isInstalled('@babel/register')) {
     requires.unshift('--require', '@babel/register');
-  } else if (isInstalled('babel-register')) {
+  } else if (utils.isInstalled('babel-register')) {
     requires.unshift('--require', 'babel-register');
   }
 }
@@ -56,7 +46,12 @@ fastGlob(input, { ...parsedArgv, absolute: true })
     reporter.start();
 
     const files = absolutePaths.map((filename) => async () => {
-      const env = Object.assign(proc.env, { ASIA_TEST_FILE: filename });
+      const env = Object.assign(
+        {
+          ASIA_TEST_FILE: filename,
+        },
+        proc.env,
+      );
       const opts = {
         stdio: 'inherit',
         env,

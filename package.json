@@ -10,7 +10,7 @@
   "scripts": {
     "test": "nyc node test/index.js",
     "lint": "xaxa",
-    "commit": "gitcommit -sS"
+    "commit": "yarn test && git add -A && gitcommit -sS"
   },
   "eslintConfig": {
     "extends": "xaxa",
@@ -41,8 +41,7 @@
     "mri": "^1.1.1",
     "p-map": "^1.2.0",
     "p-map-series": "^1.0.0",
-    "p-reflect": "^1.0.0",
-    "serialize-error": "^2.1.0"
+    "p-reflect": "^1.0.0"
   },
   "devDependencies": {
     "gitcommit": "^1.0.7",

@@ -8,6 +8,16 @@ const babelCode = require('@babel/code-frame');
 const argvParser = require('mri');
 const reporters = require('./reporters');
 
+function isInstalled(name) {
+  try {
+    // eslint-disable-next-line global-require, import/no-dynamic-require
+    require(name);
+  } catch (err) {
+    return false;
+  }
+  return true;
+}
+
 function createMeta() {
   const tests = [];
   const stats = {
@@ -23,14 +33,28 @@ function createMeta() {
 
 function getReporter(argv = {}) {
   if (typeof argv.reporter === 'string') {
-    /* istanbul ignore next */
-    const reporter =
-      argv.reporter[0] === '.'
-        ? path.join(proc.cwd(), argv.reporter)
-        : argv.reporter;
-
     /* eslint-disable global-require, import/no-dynamic-require */
-    return require(reporter);
+
+    if (argv.reporter[0] === '.') {
+      return require(path.join(proc.cwd(), argv.reporter));
+    }
+
+    if (Object.keys(reporters).includes(argv.reporter)) {
+      const reporterPath = path.join(__dirname, 'reporters', argv.reporter);
+      return require(reporterPath);
+    }
+
+    const prefix = 'asia-reporter-';
+
+    if (isInstalled(prefix + argv.reporter)) {
+      return require(prefix + argv.reporter);
+    }
+
+    if (isInstalled(argv.reporter)) {
+      return require(argv.reporter);
+    }
+
+    return require(argv.reporter);
   }
 
   return reporters.mini;
@@ -130,4 +154,5 @@ module.exports = {
   getCodeInfo,
   createReporter,
   createMeta,
+  isInstalled,
 };

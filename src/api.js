@@ -5,7 +5,6 @@ const assert = require('assert');
 const parallel = require('p-map');
 const pReflect = require('p-reflect');
 const sequence = require('p-map-series');
-const serializer = require('serialize-error');
 const cleanup = require('clean-stacktrace');
 
 /* eslint-disable promise/prefer-await-to-then */
@@ -92,8 +91,8 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
         stats.fail += 1;
         test.fail = true;
 
-        test.reason = serializer(test.reason);
         test.reason.stack = cleanup(test.reason.stack);
+        reporter.pass({ stats }, test);
       }
       if (test.isFulfilled) {
         stats.pass += 1;
@@ -103,6 +102,7 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
           stats.pass -= 1;
           stats.skip += 1;
         }
+        reporter.pass({ stats }, test);
       }
 
       // proc.send({ stats, test, afterEach: true });
