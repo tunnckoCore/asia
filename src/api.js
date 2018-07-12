@@ -92,7 +92,7 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
         test.fail = true;
 
         test.reason.stack = cleanup(test.reason.stack);
-        reporter.pass({ stats }, test);
+        reporter.fail({ stats }, test);
       }
       if (test.isFulfilled) {
         stats.pass += 1;

@@ -1,5 +1,10 @@
 'use strict';
 
+/**
+ * Run it with `node src/cli.js example.test.js` because
+ * otherwise it will run its tests from `test/` folder too.
+ */
+
 const test = require('./src/index');
 
 test('foo bar baz', (t) => {
