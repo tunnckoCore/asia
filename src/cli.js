@@ -1,6 +1,7 @@
+#!/usr/bin/env node
+
 'use strict';
 
-// const cp = require('child_process');
 const proc = require('process');
 const ansi = require('ansi-colors');
 const execa = require('execa');
