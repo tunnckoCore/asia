@@ -335,9 +335,9 @@ asap@^2.0.0:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/asap/-/asap-2.0.6.tgz#e50347611d7e690943208bbdafebcbc2fb866d46"
 
-asia@^0.12.1:
-  version "0.12.3"
-  resolved "https://registry.yarnpkg.com/asia/-/asia-0.12.3.tgz#467b67c1f3aaa9d4546fd0282602a05571bdf297"
+asia@^0.15.0:
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/asia/-/asia-0.15.0.tgz#8c8b192866cbfbf002b9214cd1d661e0f168121c"
   dependencies:
     "@babel/code-frame" "^7.0.0-beta.52"
     ansi-colors "^2.0.2"
@@ -347,7 +347,9 @@ asia@^0.12.1:
     execa "^0.10.0"
     export-files "^2.1.1"
     fast-glob "^2.2.2"
+    is-observable "^1.1.0"
     mri "^1.1.1"
+    observable-to-promise "^0.5.0"
     p-map "^1.2.0"
     p-map-series "^1.0.0"
     p-reflect "^1.0.0"
@@ -520,6 +522,10 @@ chardet@^0.4.0:
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/chardet/-/chardet-0.4.2.tgz#b5473b33dc97c424e5d98dc87d55d4d8a29c8bf2"
 
+ci-info@^1.0.0:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/ci-info/-/ci-info-1.1.3.tgz#710193264bb05c77b8c90d02f5aaf22216a667b2"
+
 circular-json@^0.3.1:
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/circular-json/-/circular-json-0.3.3.tgz#815c99ea84f6809529d2f45791bdf82711352d66"
@@ -578,6 +584,10 @@ cliui@^4.0.0:
     string-width "^2.1.1"
     strip-ansi "^4.0.0"
     wrap-ansi "^2.0.0"
+
+clorox@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/clorox/-/clorox-1.0.3.tgz#6fa63653f280c33d69f548fb14d239ddcfa1590d"
 
 co@^4.6.0:
   version "4.6.0"
@@ -1486,6 +1496,12 @@ is-child-process@^1.0.0, is-child-process@^1.0.2:
     is-node-emitter "^1.0.2"
     isarray "^1.0.0"
 
+is-ci@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/is-ci/-/is-ci-1.1.0.tgz#247e4162e7860cebbdaf30b774d6b0ac7dcfe7a5"
+  dependencies:
+    ci-info "^1.0.0"
+
 is-data-descriptor@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/is-data-descriptor/-/is-data-descriptor-0.1.4.tgz#0b5ee648388e2c860282e793f1856fec3f301b56"
@@ -1785,10 +1801,6 @@ kind-of@^5.0.0:
 kind-of@^6.0.0, kind-of@^6.0.2:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.2.tgz#01146b36a6218e64e58f3a8d66de5d7fc6f6d051"
-
-kleur@^1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/kleur/-/kleur-1.0.1.tgz#6b64a4a42c7226fc0319fec35904f824ad945f7e"
 
 lazy-cache@^1.0.3:
   version "1.0.4"
@@ -2318,11 +2330,11 @@ progress@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/progress/-/progress-2.0.0.tgz#8a1be366bf8fc23db2bd23f10c6fe920b4389d1f"
 
-"prompts@github:terkelg/prompts":
+prompts@terkelg/prompts:
   version "0.1.11"
   resolved "https://codeload.github.com/terkelg/prompts/tar.gz/03ce1913e847c9d56f550df38d8cb60faed19f1f"
   dependencies:
-    kleur "^1.0.0"
+    clorox "^1.0.3"
     sisteransi "^0.1.1"
 
 prop-types@^15.6.2:
@@ -2731,7 +2743,7 @@ supports-color@^3.1.2:
   dependencies:
     has-flag "^1.0.0"
 
-supports-color@^5.3.0:
+supports-color@^5.3.0, supports-color@^5.4.0:
   version "5.4.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-5.4.0.tgz#1c6b337402c2137605efe19f10fec390f6faab54"
   dependencies:

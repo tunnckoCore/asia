@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const proc = require('process');
 const assert = require('assert');
-const color = require('color-support');
+const isCI = require('is-ci');
+const isColors = require('supports-color').stdout;
 const babelCode = require('@babel/code-frame');
 const argvParser = require('mri');
 const reporters = require('./reporters');
@@ -66,7 +67,7 @@ function getParsedArgv({ argv = [], env = {} }) {
       min: true,
       cjs: false,
       concurrency: Infinity,
-      colors: color.level,
+      color: isCI === true ? false : isColors,
       showStack: false,
       gitignore: true,
       ignore: [

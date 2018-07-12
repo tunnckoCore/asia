@@ -12,7 +12,7 @@ const arrayify = require('arrayify');
 const utils = require('./utils');
 
 const parsedArgv = utils.getParsedArgv(proc);
-ansi.enabled = parsedArgv.colors;
+ansi.enabled = parsedArgv.color;
 
 const input = arrayify(
   parsedArgv._.length > 0 ? parsedArgv._ : parsedArgv.input,

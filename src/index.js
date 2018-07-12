@@ -10,7 +10,7 @@ if (!proc.env.ASIA_CLI) {
 }
 
 const parsedArgv = JSON.parse(proc.env.ASIA_ARGV);
-ansi.enabled = parsedArgv.colors;
+ansi.enabled = parsedArgv.color;
 
 const filename = proc.env.ASIA_TEST_FILE || __filename;
 const reporter = utils.createReporter({ parsedArgv, ansi, filename });
