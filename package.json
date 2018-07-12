@@ -1,12 +1,16 @@
 {
   "name": "asia",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Blazingly fast, magical and minimalist testing framework, for Today and Tomorrow",
   "repository": "olstenlarck/asia",
   "author": "Charlike Mike Reagent",
   "license": "Apache-2.0",
   "main": "src/index.js",
   "bin": "src/cli.js",
+  "files": [
+    "LICENSE",
+    "src"
+  ],
   "scripts": {
     "test": "nyc node test/index.js",
     "lint": "xaxa",
