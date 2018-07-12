@@ -56,13 +56,16 @@ function getParsedArgv({ argv = [], env = {} }) {
 
   return argvParser(argv.slice(2), {
     alias: {
+      m: 'match',
       r: 'require',
       R: 'reporter',
     },
     default: {
+      match: null,
       reporter: null,
       min: true,
       cjs: false,
+      concurrency: Infinity,
       colors: color.level,
       showStack: false,
       gitignore: true,

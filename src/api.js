@@ -10,8 +10,7 @@ const { assert, createError } = require('./utils');
 
 /* eslint-disable promise/prefer-await-to-then */
 
-module.exports = (options) => {
-  const { reporter, concurrency = Infinity } = Object.assign({}, options);
+module.exports = (reporter, options = {}) => {
   const stats = { count: 0, pass: 0, fail: 0, todo: 0, skip: 0 };
   const tests = [];
 
@@ -59,10 +58,21 @@ module.exports = (options) => {
   };
 
   asia.run = function run() {
-    const flowFn = concurrency ? parallel : sequence;
+    const flowFn = options.concurrency ? parallel : sequence;
+    const testsToRun = options.match
+      ? tests.filter((test) => {
+          // avoid regex-ing
+          if (test.title.includes(options.match)) {
+            return true;
+          }
+
+          const regex = new RegExp(options.match);
+          return regex.test(test.title);
+        })
+      : tests;
 
     reporter.emit('before', { stats });
-    return flowFn(tests, mapper, { concurrency }).then((results) => {
+    return flowFn(testsToRun, mapper, options).then((results) => {
       reporter.emit('after', { stats, results });
       return { stats, results };
     });

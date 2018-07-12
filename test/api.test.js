@@ -31,7 +31,7 @@ test('asia should throw if testFn is not a function', (t) => {
 });
 
 test('asia.run should run the tests in parallel', async (t) => {
-  const asia = api({ reporter });
+  const asia = api(reporter);
   let count = 0;
 
   asia('yeah passing', (tAssert) => {
@@ -56,7 +56,7 @@ test('asia.run should run the tests in parallel', async (t) => {
 });
 
 test('asia.run should run tests in series', async (t) => {
-  const asia = api({ concurrency: 1, reporter });
+  const asia = api(reporter, { concurrency: 1 });
   const arr = [];
 
   asia('foo bar', () => {

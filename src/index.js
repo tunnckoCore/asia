@@ -20,7 +20,7 @@ proc.on('uncaughtException', (err) => {
   proc.exit(1);
 });
 
-const asia = api({ reporter, concurrency: parsedArgv.concurrency });
+const asia = api(reporter, parsedArgv);
 
 proc.nextTick(() => {
   asia.run();
