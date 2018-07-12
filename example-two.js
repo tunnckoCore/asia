@@ -7,6 +7,16 @@
 
 const test = require('./src/index');
 
+test.beforeEach(({ stats }, { title }) => {
+  console.log('before test:', title);
+  console.log('stats:', stats);
+  console.log('======');
+});
+
+test.after(() => {
+  console.log('after hook');
+});
+
 test('first', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 700));
   t.ok(true);

@@ -7,12 +7,18 @@
 
 const test = require('./src/index');
 
+test.afterEach(({ stats }, { title }) => {
+  console.log('after each:', title);
+  console.log('stats:', stats);
+  console.log('=====');
+});
+
 test('foo bar baz', (t) => {
   t.ok(true);
 });
 
 test('some async test', async (t) => {
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  await new Promise((resolve) => setTimeout(resolve, 500));
   t.ok(true);
 });
 

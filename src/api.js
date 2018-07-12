@@ -9,7 +9,7 @@ const { assert, createError } = require('./utils');
 /* eslint-disable promise/prefer-await-to-then */
 
 module.exports = (options) => {
-  const { reporter, concurrency } = Object.assign({}, options);
+  const { reporter, concurrency = Infinity } = Object.assign({}, options);
   const stats = { count: 0, pass: 0, fail: 0, todo: 0, skip: 0 };
   const tests = [];
 
@@ -42,6 +42,19 @@ module.exports = (options) => {
 
   asia.skip = (title, fn, opts) =>
     asia(title, fn, Object.assign({}, opts, { skip: true }));
+
+  asia.before = (fn) => {
+    reporter.on('before', fn);
+  };
+  asia.beforeEach = (fn) => {
+    reporter.on('beforeEach', fn);
+  };
+  asia.afterEach = (fn) => {
+    reporter.on('afterEach', fn);
+  };
+  asia.after = (fn) => {
+    reporter.on('after', fn);
+  };
 
   asia.run = function run() {
     const flowFn = concurrency ? parallel : sequence;
