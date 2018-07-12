@@ -4,6 +4,8 @@ const parallel = require('p-map');
 const pReflect = require('p-reflect');
 const sequence = require('p-map-series');
 const cleanup = require('clean-stacktrace');
+const isObservable = require('is-observable');
+const observable2promise = require('observable-to-promise');
 const { assert, createError } = require('./utils');
 
 /* eslint-disable promise/prefer-await-to-then */
@@ -74,7 +76,12 @@ module.exports = (options) => {
 
     if (!testObject.skip) {
       promise = new Promise((resolve) => {
-        resolve(testObject.fn(assert));
+        const result = testObject.fn(assert);
+        if (isObservable(result)) {
+          resolve(observable2promise(result));
+        } else {
+          resolve(result);
+        }
       });
     }
 
