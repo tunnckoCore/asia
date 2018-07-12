@@ -93,8 +93,9 @@ function getParsedArgv({ argv = [], env = {} }) {
   });
 }
 
-function createReporter({ parsedArgv = {}, ansi, filename } = {}) {
-  return getReporter(parsedArgv)({ ansi, parsedArgv, getCodeInfo, filename });
+function createReporter(reporterOptions = {}) {
+  const { parsedArgv = {} } = reporterOptions;
+  return getReporter(parsedArgv)(reporterOptions);
 }
 
 function getRelativePath(fp) {

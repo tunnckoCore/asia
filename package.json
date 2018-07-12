@@ -1,6 +1,6 @@
 {
   "name": "asia",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Blazingly fast, magical and minimalist testing framework, for Today and Tomorrow",
   "repository": "olstenlarck/asia",
   "author": "Charlike Mike Reagent",
@@ -15,7 +15,7 @@
     "test": "nyc asia 'test/**'",
     "lint": "xaxa",
     "commit-dry": "git status --porcelain && git add -A && gitcommit -sS",
-    "commit": "yarn test && git add -A && gitcommit -sS"
+    "commit": "yarn test && yarn commit-dry"
   },
   "eslintConfig": {
     "extends": "xaxa",
@@ -40,7 +40,6 @@
     "arrayify": "^1.0.0",
     "clean-stacktrace": "^1.1.0",
     "execa": "^0.10.0",
-    "export-files": "^2.1.1",
     "fast-glob": "^2.2.2",
     "is-ci": "^1.1.0",
     "is-observable": "^1.1.0",

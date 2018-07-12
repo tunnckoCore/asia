@@ -36,7 +36,7 @@ if (!parsedArgv.cjs) {
 
 /* eslint-disable promise/always-return, promise/catch-or-return */
 
-const reporter = utils.createReporter({ parsedArgv, ansi });
+const reporter = utils.createReporter({ parsedArgv, utils, ansi });
 const testFilesErrors = [];
 
 proc.env.ASIA_ARGV = JSON.stringify(parsedArgv);
@@ -46,26 +46,23 @@ fastGlob(input, { ...parsedArgv, absolute: true })
   .then((absolutePaths) => {
     reporter.emit('start');
 
-    const files = absolutePaths.map((filename) => async () => {
+    const files = absolutePaths.map((filename) => () => {
       const env = Object.assign(proc.env, { ASIA_TEST_FILE: filename });
       const opts = { stdio: 'inherit', env };
 
       const args = requires.concat(filename);
-      let cp = null;
 
-      try {
-        cp = await execa('node', args, opts);
-      } catch (err) {
-        err.testFilepath = filename;
-        testFilesErrors.push(err);
-      }
-
-      return cp;
+      return execa('node', args, opts);
     });
 
-    return parsedArgv.serial
-      ? sequence(files, (fn) => fn())
-      : parallel(files, (fn) => fn(), parsedArgv);
+    /* eslint-disable promise/no-nesting, promise/prefer-await-to-callbacks */
+    const onerror = (err) => {
+      testFilesErrors.push(err);
+    };
+
+    return parsedArgv.concurrency
+      ? sequence(files, (fn) => fn()).catch(onerror)
+      : parallel(files, (fn) => fn(), parsedArgv).catch(onerror);
   })
   .then(() => {
     reporter.emit('finish');

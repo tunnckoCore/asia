@@ -3,17 +3,16 @@
 const fs = require('fs');
 const proc = require('process');
 const Emitter = require('events');
-const utils = require('../utils');
 
 const CACHE = {};
 const skipped = [];
 const reporter = new Emitter();
 
-module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => {
+module.exports = ({ ansi, parsedArgv, utils, filename }) => {
   reporter.name = 'mini';
 
   reporter.on('error', (err) => {
-    const { ok, sourceFrame, atLine } = getCodeInfo({
+    const { ok, sourceFrame, atLine } = utils.getCodeInfo({
       parsedArgv,
       filename,
       err,
@@ -82,7 +81,7 @@ module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => {
 
     const { title, reason: err } = test;
 
-    const { ok, sourceFrame, atLine } = getCodeInfo({
+    const { ok, sourceFrame, atLine } = utils.getCodeInfo({
       parsedArgv,
       filename,
       content,

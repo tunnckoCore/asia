@@ -1,3 +1,5 @@
+'use strict';
+
 const proc = require('process');
 const ansi = require('ansi-colors');
 const utils = require('./utils');
@@ -13,7 +15,7 @@ const parsedArgv = JSON.parse(proc.env.ASIA_ARGV);
 ansi.enabled = parsedArgv.color;
 
 const filename = proc.env.ASIA_TEST_FILE || __filename;
-const reporter = utils.createReporter({ parsedArgv, ansi, filename });
+const reporter = utils.createReporter({ parsedArgv, utils, ansi, filename });
 
 proc.on('uncaughtException', (err) => {
   reporter.emit('error', err);
