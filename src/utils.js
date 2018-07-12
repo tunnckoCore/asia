@@ -53,8 +53,8 @@ function getReporter(argv = {}) {
     if (isInstalled(argv.reporter)) {
       return require(argv.reporter);
     }
-
-    return require(argv.reporter);
+    console.warn('warn: reporter you are trying to load is not installed');
+    console.warn('warn: we automatically switching to the "mini" reporter');
   }
 
   return reporters.mini;

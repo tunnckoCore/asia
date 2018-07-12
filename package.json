@@ -10,6 +10,7 @@
   "scripts": {
     "test": "nyc node test/index.js",
     "lint": "xaxa",
+    "commit-dry": "git add -A && gitcommit -sS",
     "commit": "yarn test && git add -A && gitcommit -sS"
   },
   "eslintConfig": {
