@@ -9,6 +9,7 @@ module.exports = ({ ansi, parsedArgv, filename }) => ({
   after() {
     console.log('file done:', filename);
   },
+
   pass(meta, { skip, title }) {
     if (skip && parsedArgv.min === false) {
       const relativePath = utils.getRelativePath(filename);
@@ -23,6 +24,7 @@ module.exports = ({ ansi, parsedArgv, filename }) => ({
       console.log('pass:', title);
     }
   },
+
   fail({ content }, { title, reason: err }) {
     const { ok, sourceFrame } = utils.getCodeInfo({
       parsedArgv,

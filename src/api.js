@@ -1,34 +1,17 @@
 'use strict';
 
-const proc = require('process');
-const assert = require('assert');
 const parallel = require('p-map');
 const pReflect = require('p-reflect');
 const sequence = require('p-map-series');
 const cleanup = require('clean-stacktrace');
+const { assert, createError } = require('./utils');
 
 /* eslint-disable promise/prefer-await-to-then */
 
-/* istanbul ignore next */
-assert.nextTick = (fn) => {
-  const promise = new Promise((resolve) => {
-    proc.nextTick(() => {
-      resolve(fn());
-    });
-  });
-
-  return promise;
-};
-
-function createError(msg) {
-  const err = new Error(msg);
-  err.name = 'AsiaError';
-  return err;
-}
-
 module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
   const { stats, tests } = meta;
-  function asia(title, testFn, options) {
+
+  function asia(title, testFn, opts = {}) {
     if (typeof title !== 'string') {
       throw createError('expect title `test(string, function)`');
     }
@@ -36,7 +19,7 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
       throw createError('expect testFn `test(string, function)`');
     }
 
-    const { skip = false, todo = false } = Object.assign({}, options);
+    const options = Object.assign({ skip: false, todo: false }, opts);
 
     stats.count += 1;
     // stats.skip += skip ? 1 : 0;
@@ -49,10 +32,9 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
       index: stats.count,
       fn: testFn,
       title,
+      ...options,
       pass: false,
       fail: false,
-      skip,
-      todo,
     };
 
     tests.push(test);
@@ -78,11 +60,13 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
     // proc.send({ stats, test: testObject, beforeEach: true });
     reporter.beforeEach({ stats }, testObject);
 
-    const promise = testObject.skip
-      ? Promise.resolve()
-      : new Promise((resolve) => {
-          resolve(testObject.fn(assert));
-        });
+    let promise = Promise.resolve();
+
+    if (!testObject.skip) {
+      promise = new Promise((resolve) => {
+        resolve(testObject.fn(assert));
+      });
+    }
 
     return pReflect(promise).then((result) => {
       const test = Object.assign({}, testObject, { isPending: false }, result);

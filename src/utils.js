@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const proc = require('process');
+const assert = require('assert');
 const color = require('color-support');
 const babelCode = require('@babel/code-frame');
 const argvParser = require('mri');
@@ -145,12 +146,31 @@ function getCodeInfo({ parsedArgv = {}, content, filename, err }) {
   return { ok: false };
 }
 
+/* istanbul ignore next */
+function nextTick(fn) {
+  const promise = new Promise((resolve) => {
+    proc.nextTick(() => {
+      resolve(fn());
+    });
+  });
+
+  return promise;
+}
+
+function createError(msg) {
+  const err = new Error(msg);
+  err.name = 'AsiaError';
+  return err;
+}
+
 module.exports = {
+  assert: Object.assign(assert, { nextTick }),
   getReporter,
   getParsedArgv,
   getRelativePath,
   getCodeInfo,
   createReporter,
   createMeta,
+  createError,
   isInstalled,
 };
