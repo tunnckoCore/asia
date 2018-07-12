@@ -90,10 +90,7 @@ function getParsedArgv({ argv = [], env = {} }) {
 }
 
 function createReporter({ parsedArgv = {}, ansi, filename } = {}) {
-  return Object.assign(
-    reporters.noop(),
-    getReporter(parsedArgv)({ ansi, parsedArgv, getCodeInfo, filename }),
-  );
+  return getReporter(parsedArgv)({ ansi, parsedArgv, getCodeInfo, filename });
 }
 
 function getRelativePath(fp) {

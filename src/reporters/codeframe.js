@@ -1,17 +1,16 @@
 'use strict';
 
+const Emitter = require('events');
 const utils = require('../utils');
 
 // TODO: finish it!
 
-module.exports = ({ ansi, parsedArgv, filename }) => ({
-  name: 'codeframe',
-  after() {
-    console.log('file done:', filename);
-    console.log('');
-  },
+const reporter = new Emitter();
 
-  pass(meta, { skip, title }) {
+module.exports = ({ ansi, parsedArgv, filename }) => {
+  reporter.name = 'codeframe';
+
+  reporter.on('pass', (meta, { skip, title }) => {
     if (skip && parsedArgv.min === false) {
       const relativePath = utils.getRelativePath(filename);
       console.log(
@@ -24,9 +23,9 @@ module.exports = ({ ansi, parsedArgv, filename }) => ({
     } else if (!skip) {
       console.log('pass:', title);
     }
-  },
+  });
 
-  fail({ content }, { title, reason: err }) {
+  reporter.on('fail', ({ content }, { title, reason: err }) => {
     const { ok, sourceFrame } = utils.getCodeInfo({
       parsedArgv,
       filename,
@@ -47,5 +46,12 @@ module.exports = ({ ansi, parsedArgv, filename }) => ({
     if (ok) {
       console.error(sourceFrame);
     }
-  },
-});
+  });
+
+  reporter.on('after', () => {
+    console.log('file done:', filename);
+    console.log('');
+  });
+
+  return reporter;
+};

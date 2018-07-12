@@ -44,7 +44,7 @@ proc.env.ASIA_CLI = true;
 
 fastGlob(input, { ...parsedArgv, absolute: true })
   .then((absolutePaths) => {
-    reporter.start();
+    reporter.emit('start');
 
     const files = absolutePaths.map((filename) => async () => {
       const env = Object.assign(proc.env, { ASIA_TEST_FILE: filename });
@@ -68,6 +68,6 @@ fastGlob(input, { ...parsedArgv, absolute: true })
       : parallel(files, (fn) => fn(), parsedArgv);
   })
   .then(() => {
-    reporter.finish();
+    reporter.emit('finish');
     proc.exit(testFilesErrors.length > 0 ? 1 : 0);
   });

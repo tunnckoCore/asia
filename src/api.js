@@ -46,16 +46,16 @@ module.exports = (options) => {
   asia.run = function run() {
     const flowFn = concurrency ? parallel : sequence;
 
-    reporter.before({ stats });
+    reporter.emit('before', { stats });
     return flowFn(tests, mapper, { concurrency }).then((results) => {
-      reporter.after({ stats, results });
+      reporter.emit('after', { stats, results });
       return { stats, results };
     });
   };
 
   function mapper(testObject) {
     // TODO: fix, does not work correctly when in parallel
-    reporter.beforeEach({ stats }, testObject);
+    reporter.emit('beforeEach', { stats }, testObject);
 
     let promise = Promise.resolve();
 
@@ -73,7 +73,7 @@ module.exports = (options) => {
         test.fail = true;
 
         test.reason.stack = cleanup(test.reason.stack);
-        reporter.fail({ stats }, test);
+        reporter.emit('fail', { stats }, test);
       }
       if (test.isFulfilled) {
         stats.pass += 1;
@@ -83,10 +83,10 @@ module.exports = (options) => {
           stats.pass -= 1;
           stats.skip += 1;
         }
-        reporter.pass({ stats }, test);
+        reporter.emit('pass', { stats }, test);
       }
 
-      reporter.afterEach({ stats }, test);
+      reporter.emit('afterEach', { stats }, test);
       return test;
     });
   }

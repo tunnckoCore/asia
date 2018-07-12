@@ -2,15 +2,17 @@
 
 const fs = require('fs');
 const proc = require('process');
+const Emitter = require('events');
 const utils = require('../utils');
 
 const CACHE = {};
 const skipped = [];
+const reporter = new Emitter();
 
-module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => ({
-  name: 'mini',
+module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => {
+  reporter.name = 'mini';
 
-  error(err) {
+  reporter.on('error', (err) => {
     const { ok, sourceFrame, atLine } = getCodeInfo({
       parsedArgv,
       filename,
@@ -24,9 +26,9 @@ module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => ({
     console.error('');
 
     proc.exit(1);
-  },
+  });
 
-  after({ stats }) {
+  reporter.on('after', ({ stats }) => {
     const { pass, fail, skip } = stats;
 
     const finished = fail > 0 ? ansi.bold.bgRed.white : ansi.bold.bgGreen.white;
@@ -59,15 +61,15 @@ module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => ({
     );
 
     proc.exit(fail ? 1 : 0);
-  },
+  });
 
-  pass(meta, test) {
+  reporter.on('pass', (meta, test) => {
     if (test.skip) {
       skipped.push(test);
     }
-  },
+  });
 
-  fail(meta, test) {
+  reporter.on('fail', (meta, test) => {
     let { content } = meta;
 
     if (CACHE[filename]) {
@@ -103,5 +105,7 @@ module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => ({
         `\n\n${sourceFrame}\n`,
       );
     }
-  },
-});
+  });
+
+  return reporter;
+};
