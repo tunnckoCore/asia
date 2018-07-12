@@ -17,11 +17,9 @@ ansi.enabled = parsedArgv.colors;
 const filename = proc.env.ASIA_TEST_FILE || __filename;
 const reporter = utils.createReporter({ parsedArgv, ansi, filename });
 
-const meta = utils.createMeta();
-const asia = api({ parsedArgv, meta, reporter });
+const asia = api({ reporter, concurrency: parsedArgv.concurrency });
 
 proc.on('uncaughtException', (err) => {
-  // proc.send({ error: true, reason: serializer(err) });
   reporter.error(err);
   proc.exit(1);
 });

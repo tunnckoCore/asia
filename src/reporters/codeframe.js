@@ -8,6 +8,7 @@ module.exports = ({ ansi, parsedArgv, filename }) => ({
   name: 'codeframe',
   after() {
     console.log('file done:', filename);
+    console.log('');
   },
 
   pass(meta, { skip, title }) {

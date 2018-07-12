@@ -3,7 +3,7 @@
 const proc = require('process');
 const test = require('mukla');
 const api = require('../src/api');
-const { createReporter, createMeta } = require('../src/utils');
+const { createReporter } = require('../src/utils');
 
 proc.env.ASIA_CLI = true;
 
@@ -33,7 +33,7 @@ test('asia should throw if testFn is not a function', (done) => {
 });
 
 test('asia.run should run the tests in parallel', async (done) => {
-  const asia = api({ parsedArgv, meta: createMeta(), reporter });
+  const asia = api({ reporter });
   let count = 0;
 
   asia('yeah passing', (tAssert) => {
@@ -59,8 +59,7 @@ test('asia.run should run the tests in parallel', async (done) => {
 });
 
 test('asia.run should run tests in series', async (done) => {
-  const argv = Object.assign({ serial: true }, parsedArgv);
-  const asia = api({ parsedArgv: argv, meta: createMeta(), reporter });
+  const asia = api({ concurrency: 1, reporter });
   const arr = [];
 
   asia('foo bar', () => {

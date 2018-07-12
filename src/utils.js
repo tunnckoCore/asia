@@ -19,17 +19,14 @@ function isInstalled(name) {
   return true;
 }
 
-function createMeta() {
-  const tests = [];
-  const stats = {
+function createStats() {
+  return {
     count: 0,
     pass: 0,
     fail: 0,
     todo: 0,
     skip: 0,
   };
-
-  return { tests, stats };
 }
 
 function getReporter(argv = {}) {
@@ -75,7 +72,6 @@ function getParsedArgv({ argv = [], env = {} }) {
       reporter: null,
       min: true,
       cjs: false,
-      serial: false,
       colors: color.level,
       showStack: false,
       gitignore: true,
@@ -170,7 +166,7 @@ module.exports = {
   getRelativePath,
   getCodeInfo,
   createReporter,
-  createMeta,
+  createStats,
   createError,
   isInstalled,
 };

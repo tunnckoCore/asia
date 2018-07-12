@@ -4,12 +4,14 @@ const parallel = require('p-map');
 const pReflect = require('p-reflect');
 const sequence = require('p-map-series');
 const cleanup = require('clean-stacktrace');
-const { assert, createError } = require('./utils');
+const { assert, createError, createStats } = require('./utils');
 
 /* eslint-disable promise/prefer-await-to-then */
 
-module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
-  const { stats, tests } = meta;
+module.exports = (options) => {
+  const { reporter, concurrency } = Object.assign({}, options);
+  const stats = createStats();
+  const tests = [];
 
   function asia(title, testFn, opts = {}) {
     if (typeof title !== 'string') {
@@ -19,11 +21,9 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
       throw createError('expect testFn `test(string, function)`');
     }
 
-    const options = Object.assign({ skip: false, todo: false }, opts);
+    const extra = Object.assign({ skip: false, todo: false }, opts);
 
     stats.count += 1;
-    // stats.skip += skip ? 1 : 0;
-    // stats.todo += todo ? 1 : 0;
 
     const test = {
       isPending: true,
@@ -32,7 +32,7 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
       index: stats.count,
       fn: testFn,
       title,
-      ...options,
+      ...extra,
       pass: false,
       fail: false,
     };
@@ -40,16 +40,14 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
     tests.push(test);
   }
 
-  asia.skip = (title, fn, options) =>
-    asia(title, fn, Object.assign({}, options, { skip: true }));
+  asia.skip = (title, fn, opts) =>
+    asia(title, fn, Object.assign({}, opts, { skip: true }));
 
   asia.run = function run() {
-    const flowFn = parsedArgv.serial ? sequence : parallel;
+    const flowFn = concurrency ? parallel : sequence;
 
-    // proc.send({ stats, before: true });
     reporter.before({ stats });
-    return flowFn(tests, mapper, parsedArgv).then((results) => {
-      // proc.send({ stats, results, after: true });
+    return flowFn(tests, mapper, { concurrency }).then((results) => {
       reporter.after({ stats, results });
       return { stats, results };
     });
@@ -57,7 +55,6 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
 
   function mapper(testObject) {
     // TODO: fix, does not work correctly when in parallel
-    // proc.send({ stats, test: testObject, beforeEach: true });
     reporter.beforeEach({ stats }, testObject);
 
     let promise = Promise.resolve();
@@ -89,7 +86,6 @@ module.exports = ({ parsedArgv, meta = {}, reporter } = {}) => {
         reporter.pass({ stats }, test);
       }
 
-      // proc.send({ stats, test, afterEach: true });
       reporter.afterEach({ stats }, test);
       return test;
     });
