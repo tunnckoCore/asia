@@ -19,16 +19,6 @@ function isInstalled(name) {
   return true;
 }
 
-function createStats() {
-  return {
-    count: 0,
-    pass: 0,
-    fail: 0,
-    todo: 0,
-    skip: 0,
-  };
-}
-
 function getReporter(argv = {}) {
   if (typeof argv.reporter === 'string') {
     /* eslint-disable global-require, import/no-dynamic-require */
@@ -51,6 +41,7 @@ function getReporter(argv = {}) {
     if (isInstalled(argv.reporter)) {
       return require(argv.reporter);
     }
+
     console.warn('warn: reporter you are trying to load is not installed');
     console.warn('warn: we automatically switching to the "mini" reporter');
   }
@@ -166,7 +157,6 @@ module.exports = {
   getRelativePath,
   getCodeInfo,
   createReporter,
-  createStats,
   createError,
   isInstalled,
 };

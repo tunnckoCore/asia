@@ -4,13 +4,13 @@ const parallel = require('p-map');
 const pReflect = require('p-reflect');
 const sequence = require('p-map-series');
 const cleanup = require('clean-stacktrace');
-const { assert, createError, createStats } = require('./utils');
+const { assert, createError } = require('./utils');
 
 /* eslint-disable promise/prefer-await-to-then */
 
 module.exports = (options) => {
   const { reporter, concurrency } = Object.assign({}, options);
-  const stats = createStats();
+  const stats = { count: 0, pass: 0, fail: 0, todo: 0, skip: 0 };
   const tests = [];
 
   function asia(title, testFn, opts = {}) {
