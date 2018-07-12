@@ -40,6 +40,7 @@ test('getParsedArgv returns correct when have env.ASIA_ARGV passed', (done) => {
   test.deepEqual(parsedArgv, oldArgv);
   done();
 });
+
 test('getParsedArgv gets correct when no env given', (done) => {
   const argv = getParsedArgv({ argv: ['fake', 'fake', '--foobar=hohoho'] });
 
@@ -56,6 +57,7 @@ test('getReporter returns default "mini" reporter when no argv', (done) => {
   test.strictEqual(reporter.name, 'mini');
   done();
 });
+
 test('getReporter returns reporter when --reporter is passed', (done) => {
   // eslint-disable-next-line global-require
   const codeframe = require('../src/reporters/codeframe');
