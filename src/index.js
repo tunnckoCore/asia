@@ -11,10 +11,11 @@ if (!proc.env.ASIA_CLI) {
 }
 
 const parsedArgv = JSON.parse(proc.env.ASIA_ARGV);
-const filename = proc.env.ASIA_TEST_FILE || __filename;
-const reporter = utils.createReporter({ parsedArgv, ansi, filename });
 
 ansi.enabled = parsedArgv.colors;
+
+const filename = proc.env.ASIA_TEST_FILE || __filename;
+const reporter = utils.createReporter({ parsedArgv, ansi, filename });
 
 const meta = utils.createMeta();
 const asia = api({ parsedArgv, meta, reporter });
