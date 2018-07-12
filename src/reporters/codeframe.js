@@ -4,9 +4,12 @@ const utils = require('../utils');
 
 // TODO: finish it!
 
-module.exports = ({ ansi, parsedArgv }) => ({
+module.exports = ({ ansi, parsedArgv, filename }) => ({
   name: 'codeframe',
-  pass({ filename }, { skip, title }) {
+  after() {
+    console.log('file done:', filename);
+  },
+  pass(meta, { skip, title }) {
     if (skip && parsedArgv.min === false) {
       const relativePath = utils.getRelativePath(filename);
       console.log(
@@ -20,7 +23,7 @@ module.exports = ({ ansi, parsedArgv }) => ({
       console.log('pass:', title);
     }
   },
-  fail({ content, filename }, { title, reason: err }) {
+  fail({ content }, { title, reason: err }) {
     const { ok, sourceFrame } = utils.getCodeInfo({
       parsedArgv,
       filename,

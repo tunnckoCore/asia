@@ -61,27 +61,23 @@ module.exports = ({ ansi, parsedArgv, getCodeInfo, filename }) => ({
     proc.exit(fail ? 1 : 0);
   },
 
-  afterEach(meta, test) {
-    if (test.fail) {
-      /* eslint-disable no-param-reassign */
-      if (CACHE[filename]) {
-        // Hit filesystem once per test file
-        meta.content = CACHE[filename];
-      } else {
-        meta.content = fs.readFileSync(filename, 'utf-8');
-        CACHE[filename] = meta.content;
-      }
-      /* eslint-enable no-param-reassign */
-
-      this.fail(meta, test);
-    }
+  pass(meta, test) {
     if (test.skip) {
       skipped.push(test);
     }
   },
 
   fail(meta, test) {
-    const { content } = meta;
+    let { content } = meta;
+
+    if (CACHE[filename]) {
+      // Hit filesystem once per test file
+      content = CACHE[filename];
+    } else {
+      content = fs.readFileSync(filename, 'utf-8');
+      CACHE[filename] = content;
+    }
+
     const { title, reason: err } = test;
 
     const { ok, sourceFrame, atLine } = getCodeInfo({

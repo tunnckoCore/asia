@@ -73,9 +73,7 @@ function getParsedArgv({ argv = [], env = {} }) {
     default: {
       reporter: null,
       min: true,
-      cov: false,
       cjs: false,
-      tap: false,
       serial: false,
       colors: color.level,
       showStack: false,
