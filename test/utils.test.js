@@ -1,6 +1,6 @@
 'use strict';
 
-const test = require('mukla');
+const test = require('asia');
 
 const {
   getReporter,
@@ -10,64 +10,58 @@ const {
   getCodeInfo,
 } = require('../src/utils');
 
-test('getRelativePath returns a string without throwing', (done) => {
-  test.strictEqual(typeof getRelativePath(__filename), 'string');
-  done();
+test('getRelativePath returns a string without throwing', (t) => {
+  t.strictEqual(typeof getRelativePath(__filename), 'string');
 });
 
-test('getCodeInfo returns not ok when cant find filename in stack', (done) => {
+test('getCodeInfo returns not ok when cant find filename in stack', (t) => {
   const { ok } = getCodeInfo({ err: { stack: '' }, filename: 'fake-bar.js' });
 
-  test.strictEqual(ok, false);
-  done();
+  t.strictEqual(ok, false);
 });
-test('getCodeInfo is ok', (done) => {
+
+test('getCodeInfo is ok', (t) => {
   const err = new Error('woohoo fake');
   const opts = { err, filename: __filename };
   const { ok, sourceFrame, atLine } = getCodeInfo(opts);
 
-  test.strictEqual(ok, true);
-  test.strictEqual(typeof sourceFrame, 'string');
-  test.strictEqual(atLine.includes(__filename), true);
-  done();
+  t.strictEqual(ok, true);
+  t.strictEqual(typeof sourceFrame, 'string');
+  t.strictEqual(atLine.includes(__filename), true);
 });
 
-test('getParsedArgv returns correct when have env.ASIA_ARGV passed', (done) => {
+test('getParsedArgv returns correct when have env.ASIA_ARGV passed', (t) => {
   const oldArgv = { qux: 123, bar: 'zazz' };
   const ASIA_ARGV = JSON.stringify(oldArgv);
   const parsedArgv = getParsedArgv({ env: { ASIA_ARGV } });
 
-  test.deepEqual(parsedArgv, oldArgv);
-  done();
+  t.deepEqual(parsedArgv, oldArgv);
 });
 
-test('getParsedArgv gets correct when no env given', (done) => {
+test('getParsedArgv gets correct when no env given', (t) => {
   const argv = getParsedArgv({ argv: ['fake', 'fake', '--foobar=hohoho'] });
 
-  test.strictEqual(typeof argv, 'object');
-  test.strictEqual(argv.foobar, 'hohoho');
-  done();
+  t.strictEqual(typeof argv, 'object');
+  t.strictEqual(argv.foobar, 'hohoho');
 });
 
-test('getReporter returns default "mini" reporter when no argv', (done) => {
+test('getReporter returns default "mini" reporter when no argv', (t) => {
   const reporter = createReporter();
 
-  test.strictEqual(typeof getReporter(), 'function');
-  test.strictEqual(typeof reporter, 'object');
-  test.strictEqual(reporter.name, 'mini');
-  done();
+  t.strictEqual(typeof getReporter(), 'function');
+  t.strictEqual(typeof reporter, 'object');
+  t.strictEqual(reporter.name, 'mini');
 });
 
-test('getReporter returns reporter when --reporter is passed', (done) => {
+test('getReporter returns reporter when --reporter is passed', (t) => {
   // eslint-disable-next-line global-require
   const codeframe = require('../src/reporters/codeframe');
   const reporterFn = getReporter({ reporter: codeframe });
 
-  test.strictEqual(typeof reporterFn, 'function');
+  t.strictEqual(typeof reporterFn, 'function');
 
   const reporter = createReporter({
     parsedArgv: { reporter: './src/reporters/codeframe.js' },
   });
-  test.strictEqual(reporter.name, 'codeframe');
-  done();
+  t.strictEqual(reporter.name, 'codeframe');
 });

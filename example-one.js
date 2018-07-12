@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Run it with `node src/cli.js example.test.js` because
+ * Run it with `node src/cli.js example-one.js` because
  * otherwise it will run its tests from `test/` folder too.
  */
 

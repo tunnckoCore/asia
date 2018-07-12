@@ -1,7 +1,7 @@
 'use strict';
 
 const proc = require('process');
-const test = require('mukla');
+const test = require('asia');
 const api = require('../src/api');
 const { createReporter } = require('../src/utils');
 
@@ -12,27 +12,25 @@ const reporter = createReporter({
   parsedArgv,
 });
 
-test('asia should throw if title is not a string', (done) => {
+test('asia should throw if title is not a string', (t) => {
   const asia = api();
   function fixture() {
     asia(123);
   }
 
-  test.throws(fixture, /expect title/);
-  done();
+  t.throws(fixture, /expect title/);
 });
 
-test('asia should throw if testFn is not a function', (done) => {
+test('asia should throw if testFn is not a function', (t) => {
   const asia = api();
   function fixture() {
     asia('foo bar baz');
   }
 
-  test.throws(fixture, /expect testFn/);
-  done();
+  t.throws(fixture, /expect testFn/);
 });
 
-test('asia.run should run the tests in parallel', async (done) => {
+test('asia.run should run the tests in parallel', async (t) => {
   const asia = api({ reporter });
   let count = 0;
 
@@ -46,19 +44,18 @@ test('asia.run should run the tests in parallel', async (done) => {
     tAssert.ok(false);
   });
 
-  proc.nextTick(async () => {
+  await t.nextTick(async () => {
     const { stats } = await asia.run();
 
-    test.strictEqual(stats.count, 3);
-    test.strictEqual(stats.pass, 1);
-    test.strictEqual(stats.fail, 1);
-    test.strictEqual(stats.skip, 1);
-    test.strictEqual(count, 2);
-    done();
+    t.strictEqual(stats.count, 3);
+    t.strictEqual(stats.pass, 1);
+    t.strictEqual(stats.fail, 1);
+    t.strictEqual(stats.skip, 1);
+    t.strictEqual(count, 2);
   });
 });
 
-test('asia.run should run tests in series', async (done) => {
+test('asia.run should run tests in series', async (t) => {
   const asia = api({ concurrency: 1, reporter });
   const arr = [];
 
@@ -69,11 +66,10 @@ test('asia.run should run tests in series', async (done) => {
     arr.push(2);
   });
 
-  proc.nextTick(async () => {
+  await t.nextTick(async () => {
     await asia.run();
-    test.strictEqual(arr.length, 2);
-    test.strictEqual(arr[0], 1);
-    test.strictEqual(arr[1], 2);
-    done();
+    t.strictEqual(arr.length, 2);
+    t.strictEqual(arr[0], 1);
+    t.strictEqual(arr[1], 2);
   });
 });

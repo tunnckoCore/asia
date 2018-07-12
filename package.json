@@ -12,7 +12,7 @@
     "src"
   ],
   "scripts": {
-    "test": "nyc node test/index.js",
+    "test": "nyc asia 'test/**'",
     "lint": "xaxa",
     "commit-dry": "git add -A && gitcommit -sS",
     "commit": "yarn test && git add -A && gitcommit -sS"
@@ -49,6 +49,7 @@
     "p-reflect": "^1.0.0"
   },
   "devDependencies": {
+    "asia": "^0.12.1",
     "gitcommit": "^1.0.7",
     "mukla": "^0.4.9",
     "nyc": "^12.0.2",
