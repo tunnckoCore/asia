@@ -12,7 +12,7 @@
     "src"
   ],
   "scripts": {
-    "test": "nyc node src/cli.js 'test/**' -u",
+    "test": "nyc asia -u",
     "lint": "xaxa",
     "commit-dry": "git status --porcelain && git add -A && gitcommit -sS",
     "commit": "yarn test && yarn commit-dry"
