@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-// const util = require('util');
 const path = require('path');
 const proc = require('process');
 const assert = require('assert');
