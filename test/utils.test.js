@@ -1,6 +1,6 @@
 'use strict';
 
-const test = require('asia');
+const test = require('../src');
 
 const {
   getReporter,

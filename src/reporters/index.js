@@ -2,8 +2,14 @@
 
 /* eslint-disable global-require */
 
-module.exports = {
-  noop: require('./noop'),
-  mini: require('./mini'),
-  codeframe: require('./codeframe'),
-};
+function defineProp(obj, key, get) {
+  Object.defineProperty(obj, key, { get });
+}
+
+const reporters = {};
+
+defineProp(reporters, 'noop', () => require('./noop'));
+defineProp(reporters, 'mini', () => require('./mini'));
+defineProp(reporters, 'codeframe', () => require('./codeframe'));
+
+module.exports = reporters;

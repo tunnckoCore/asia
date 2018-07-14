@@ -14,55 +14,40 @@ const utils = require('./utils');
 const parsedArgv = utils.getParsedArgv(proc);
 ansi.enabled = parsedArgv.color;
 
-const input = arrayify(
-  parsedArgv._.length > 0 ? parsedArgv._ : parsedArgv.input,
-);
+const inputFiles = parsedArgv._.length > 0 ? parsedArgv._ : parsedArgv.input;
+const input = arrayify(inputFiles);
 
-const requires = arrayify(parsedArgv.require).reduce(
-  (acc, req) => acc.concat('--require', req),
-  [],
-);
+const reducer = (acc, req) => acc.concat('--require', req);
+const requires = arrayify(parsedArgv.require).reduce(reducer, []);
 
-// add the specific loaders before any other given `--require`s
-if (!parsedArgv.cjs) {
-  if (utils.isInstalled('esm')) {
-    requires.unshift('--require', 'esm');
-  } else if (utils.isInstalled('@babel/register')) {
-    requires.unshift('--require', '@babel/register');
-  } else if (utils.isInstalled('babel-register')) {
-    requires.unshift('--require', 'babel-register');
-  }
-}
-
+/* eslint-disable promise/no-nesting */
 /* eslint-disable promise/always-return, promise/catch-or-return */
 
 const reporter = utils.createReporter({ parsedArgv, utils, ansi });
 const testFilesErrors = [];
 
-proc.env.ASIA_ARGV = JSON.stringify(parsedArgv);
 proc.env.ASIA_CLI = true;
+proc.env.ASIA_ARGV = JSON.stringify(parsedArgv);
 
-fastGlob(input, { ...parsedArgv, absolute: true })
+fastGlob(input, Object.assign(parsedArgv, { absolute: true }))
   .then((absolutePaths) => {
     reporter.emit('start');
 
-    const files = absolutePaths.map((filename) => () => {
+    const files = absolutePaths.map((filename) => {
+      const args = requires.concat(filename);
       const env = Object.assign(proc.env, { ASIA_TEST_FILE: filename });
       const opts = { stdio: 'inherit', env };
-
-      const args = requires.concat(filename);
 
       return execa('node', args, opts);
     });
 
-    /* eslint-disable promise/no-nesting, promise/prefer-await-to-callbacks */
     const onerror = (err) => {
       testFilesErrors.push(err);
     };
 
     return parsedArgv.concurrency
-      ? sequence(files, (fn) => fn()).catch(onerror)
-      : parallel(files, (fn) => fn(), parsedArgv).catch(onerror);
+      ? sequence(files, (x) => x).catch(onerror)
+      : parallel(files, (x) => x, parsedArgv).catch(onerror);
   })
   .then(() => {
     reporter.emit('finish');

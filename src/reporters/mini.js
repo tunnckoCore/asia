@@ -1,14 +1,14 @@
 'use strict';
 
-const fs = require('fs');
 const proc = require('process');
 const Emitter = require('events');
+const prettyMs = require('pretty-ms');
 
-const CACHE = {};
+const CACHE = { time: {} };
 const skipped = [];
 const reporter = new Emitter();
 
-module.exports = ({ ansi, parsedArgv, utils, filename }) => {
+module.exports = ({ ansi, parsedArgv, utils, filename /* , content */ }) => {
   reporter.name = 'mini';
 
   reporter.on('error', (err) => {
@@ -19,20 +19,28 @@ module.exports = ({ ansi, parsedArgv, utils, filename }) => {
     });
 
     if (ok) {
-      console.error(ansi.bold.bgRed(' CRITICAL '), atLine);
+      console.error(ansi.bold.bgRed('  CRITICAL  '), atLine);
       console.error(sourceFrame);
+    } else {
+      console.error(ansi.bold.bgRed('  CRITICAL  '));
+      console.error(ansi.red(err.stack));
     }
     console.error('');
 
     proc.exit(1);
   });
 
+  reporter.on('before', () => {
+    CACHE.time.start = Date.now();
+  });
   reporter.on('after', ({ stats }) => {
+    CACHE.time.ms = Date.now() - CACHE.time.start;
+
     const { pass, fail, skip } = stats;
 
+    const relative = utils.getRelativePath(filename);
     const finished = fail > 0 ? ansi.bold.bgRed.white : ansi.bold.bgGreen.white;
 
-    const relativePath = utils.getRelativePath(filename);
     const strFail = fail ? ansi.red(`${fail} failing, `) : '';
     const strSkip = skip ? ansi.cyan(`${skip} skipped`) : '';
     const strPass = `${pass} passing`;
@@ -40,10 +48,10 @@ module.exports = ({ ansi, parsedArgv, utils, filename }) => {
     if (skip && parsedArgv.min === false) {
       skipped.forEach(({ title }) => {
         console.log(
-          ansi.bold.bgCyan(' SKIP '),
+          ansi.bold.bgCyan('  SKIP  '),
           `${ansi.bold.cyan(title)}`,
-          `\n${ansi.bold.bgWhite.cyan('  at  ')}`,
-          ansi.bold.white(relativePath),
+          `\n${ansi.bold.bgWhite.cyan('   at   ')}`,
+          ansi.bold.white(relative),
           '\n',
         );
       });
@@ -52,9 +60,10 @@ module.exports = ({ ansi, parsedArgv, utils, filename }) => {
     const log = fail ? console.error : console.log;
 
     log(
-      finished(' FILE '),
-      ansi.bold(relativePath),
-      `\n${finished(' DONE ')}`,
+      finished('  FILE  '),
+      ansi.bold(relative),
+      ansi.dim(`(${prettyMs(CACHE.time.ms)})`),
+      `\n${finished('  DONE  ')}`,
       strFail + ansi.green(strPass) + (skip ? `, ${strSkip}` : ''),
       '\n',
     );
@@ -62,22 +71,14 @@ module.exports = ({ ansi, parsedArgv, utils, filename }) => {
     proc.exit(fail ? 1 : 0);
   });
 
-  reporter.on('pass', (meta, test) => {
-    if (test.skip) {
-      skipped.push(test);
-    }
+  // reporter.on('afterEach', async ({ fileshots, filesnap }, test) => {});
+
+  reporter.on('skip', (meta, test) => {
+    skipped.push(test);
   });
 
   reporter.on('fail', (meta, test) => {
-    let { content } = meta;
-
-    if (CACHE[filename]) {
-      // Hit filesystem once per test file
-      content = CACHE[filename];
-    } else {
-      content = fs.readFileSync(filename, 'utf-8');
-      CACHE[filename] = content;
-    }
+    const { content } = meta;
 
     const { title, reason: err } = test;
 
@@ -88,20 +89,31 @@ module.exports = ({ ansi, parsedArgv, utils, filename }) => {
       err,
     });
 
+    const { bold } = ansi.bold;
+
     if (ok) {
-      const { bold } = ansi.bold;
       const at = atLine.trim();
       const idx = at.indexOf('(');
       const place = at.slice(3, idx - 1);
       const file = at.slice(idx);
 
       console.error(
-        bold.bgRed.white(' FAIL '),
+        bold.bgRed.white('  FAIL  '),
         bold.white(title),
-        `\n${bold.bgWhite.red('  at  ')}`,
+        `\n${bold.bgWhite.red('   at   ')}`,
         bold.red(place),
         ansi.dim(file),
         `\n\n${sourceFrame}\n`,
+      );
+    } else {
+      console.error(
+        bold.bgRed.white('  FAIL  '),
+        bold.white(title),
+        `\n${bold.bgWhite.red('   at   ')}`,
+        bold.dim(filename),
+        '\n',
+        ansi.red(err.stack),
+        '\n',
       );
     }
   });

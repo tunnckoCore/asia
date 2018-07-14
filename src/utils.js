@@ -1,13 +1,16 @@
 'use strict';
 
 const fs = require('fs');
+// const util = require('util');
 const path = require('path');
 const proc = require('process');
 const assert = require('assert');
-const isCI = require('is-ci');
 const isColors = require('supports-color').stdout;
 const babelCode = require('@babel/code-frame');
 const argvParser = require('mri');
+const mkdirp = require('mkdirp');
+const rimraf = require('rimraf');
+const isCI = require('is-ci');
 const reporters = require('./reporters');
 
 function isInstalled(name) {
@@ -18,6 +21,12 @@ function isInstalled(name) {
     return false;
   }
   return true;
+}
+
+function getRelativePath(fp) {
+  const relDir = path.basename(path.dirname(fp));
+  const basename = path.basename(fp);
+  return `.${path.sep}${path.join(relDir, basename)}`;
 }
 
 function getReporter(argv = {}) {
@@ -54,9 +63,9 @@ function getParsedArgv({ argv = [], env = {} }) {
   if (env.ASIA_ARGV) {
     return JSON.parse(env.ASIA_ARGV);
   }
-
   return argvParser(argv.slice(2), {
     alias: {
+      u: 'update',
       m: 'match',
       r: 'require',
       R: 'reporter',
@@ -65,9 +74,11 @@ function getParsedArgv({ argv = [], env = {} }) {
       match: null,
       reporter: null,
       min: true,
-      cjs: false,
-      concurrency: Infinity,
-      color: isCI === true ? false : isColors,
+      serial: false,
+      snapshots: true,
+      concurrency: 100,
+      color: isCI === true ? false : isColors.level,
+      update: false,
       showStack: false,
       gitignore: true,
       ignore: [
@@ -75,9 +86,10 @@ function getParsedArgv({ argv = [], env = {} }) {
         '**/node_modules/**',
         '**/bower_components/**',
         '**/flow-typed/**',
+        '**/snapshots/**',
         '**/fixtures/**',
-        '**/helpers/**',
         '**/coverage/**',
+        '**/helpers/**',
         '**/.git',
       ],
       input: [
@@ -98,12 +110,6 @@ function createReporter(reporterOptions = {}) {
   return getReporter(parsedArgv)(reporterOptions);
 }
 
-function getRelativePath(fp) {
-  const prefix = `.${path.sep}`;
-
-  return prefix + path.relative(proc.cwd(), fp);
-}
-
 function getCodeInfo({ parsedArgv = {}, content, filename, err }) {
   let parts = err.stack.split('\n');
 
@@ -112,12 +118,13 @@ function getCodeInfo({ parsedArgv = {}, content, filename, err }) {
   }
 
   const firstLine = parts.shift();
-
   const atLine = parts.filter((ln) => ln.includes(filename)).shift();
 
   if (atLine) {
     const filepath = atLine.slice(atLine.indexOf(' (') + 2, -1);
-    const [line, column] = filepath.slice(filename.length + 1).split(':');
+    const p = filepath.slice(filename.length + 1).split(':');
+    const column = +p[p.length - 1];
+    const line = +p[p.length - 2];
 
     const loc = { start: { line: +line, column: +column } };
     /* istanbul ignore next */
@@ -129,7 +136,7 @@ function getCodeInfo({ parsedArgv = {}, content, filename, err }) {
 
     const sourceFrame = babelCode.codeFrameColumns(source, loc, opts);
 
-    return { ok: true, sourceFrame, atLine };
+    return { ok: true, sourceFrame, atLine: atLine.replace('file://', '') };
   }
 
   return { ok: false };
@@ -152,6 +159,31 @@ function createError(msg) {
   return err;
 }
 
+function createSnaps(parsedArgv, filename) {
+  if (!parsedArgv.snapshots) {
+    return null;
+  }
+
+  const stemname = path.basename(filename, path.extname(filename));
+  const snapsdir = path.join(path.dirname(filename), 'snapshots');
+  const filesnap = path.join(snapsdir, `${stemname}.snapshot.json`);
+
+  let fileshots = {};
+
+  if (parsedArgv.update) {
+    rimraf.sync(snapsdir);
+  }
+
+  if (!fs.existsSync(snapsdir)) {
+    mkdirp.sync(snapsdir);
+  }
+  if (fs.existsSync(filesnap)) {
+    fileshots = JSON.parse(fs.readFileSync(filesnap, 'utf-8'));
+  }
+
+  return { filesnap, fileshots };
+}
+
 module.exports = {
   assert: Object.assign(assert, { nextTick }),
   getReporter,
@@ -160,5 +192,6 @@ module.exports = {
   getCodeInfo,
   createReporter,
   createError,
+  createSnaps,
   isInstalled,
 };

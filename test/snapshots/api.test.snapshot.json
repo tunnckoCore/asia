@@ -1,0 +1,46 @@
+{
+  "asia should throw if title is not a string": {
+    "skip": false,
+    "todo": false,
+    "run": false,
+    "isPending": false,
+    "isRejected": false,
+    "isFulfilled": true,
+    "id": 1,
+    "title": "asia should throw if title is not a string",
+    "str": "(t) => {\n  const asia = api();\n  function fixture() {\n    asia(123);\n  }\n\n  t.throws(fixture, /expect `title`/);\n}"
+  },
+  "asia should throw if testFn is not a function": {
+    "skip": false,
+    "todo": false,
+    "run": false,
+    "isPending": false,
+    "isRejected": false,
+    "isFulfilled": true,
+    "id": 2,
+    "title": "asia should throw if testFn is not a function",
+    "str": "(t) => {\n  const asia = api();\n  function fixture() {\n    asia('foo bar baz');\n  }\n\n  t.throws(fixture, /expect `testFn`/);\n}"
+  },
+  "asia.run should run the tests in parallel": {
+    "skip": false,
+    "todo": false,
+    "run": false,
+    "isPending": false,
+    "isRejected": false,
+    "isFulfilled": true,
+    "id": 3,
+    "title": "asia.run should run the tests in parallel",
+    "str": "async (t) => {\n  const asia = api(reporter);\n  let count = 0;\n\n  asia('yeah passing', (tAssert) => {\n    tAssert.ok(true);\n    count += 1;\n  });\n\n  asia.todo('test without implementation');\n\n  asia.skip('skipping test, yeah', () => {});\n\n  asia('some failing test', (tAssert) => {\n    count += 1;\n    tAssert.ok(false);\n  });\n\n  await t.nextTick(async () => {\n    const { stats } = await asia.run();\n\n    t.strictEqual(stats.count, 4);\n    t.strictEqual(stats.pass, 1);\n    t.strictEqual(stats.fail, 1);\n    t.strictEqual(stats.skip, 1);\n    t.strictEqual(stats.todo, 1);\n    t.strictEqual(count, 2);\n  });\n}"
+  },
+  "asia.run should run tests in series": {
+    "skip": false,
+    "todo": false,
+    "run": false,
+    "isPending": false,
+    "isRejected": false,
+    "isFulfilled": true,
+    "id": 4,
+    "title": "asia.run should run tests in series",
+    "str": "async (t) => {\n  const asia = api(reporter, { concurrency: 1 });\n  const arr = [];\n\n  asia('foo bar', () => {\n    arr.push(1);\n  });\n  asia('second', () => {\n    arr.push(2);\n  });\n\n  await t.nextTick(async () => {\n    await asia.run();\n    t.strictEqual(arr.length, 2);\n    t.strictEqual(arr[0], 1);\n    t.strictEqual(arr[1], 2);\n  });\n}"
+  }
+}

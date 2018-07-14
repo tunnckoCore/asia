@@ -1,6 +1,6 @@
 {
   "name": "asia",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "description": "Blazingly fast, magical and minimalist testing framework, for Today and Tomorrow",
   "repository": "olstenlarck/asia",
   "author": "Charlike Mike Reagent",
@@ -12,7 +12,7 @@
     "src"
   ],
   "scripts": {
-    "test": "nyc asia 'test/**'",
+    "test": "nyc node src/cli.js 'test/**' -u",
     "lint": "xaxa",
     "commit-dry": "git status --porcelain && git add -A && gitcommit -sS",
     "commit": "yarn test && yarn commit-dry"
@@ -43,17 +43,19 @@
     "fast-glob": "^2.2.2",
     "is-ci": "^1.1.0",
     "is-observable": "^1.1.0",
+    "mkdirp": "^0.5.1",
     "mri": "^1.1.1",
     "observable-to-promise": "^0.5.0",
     "p-map": "^1.2.0",
     "p-map-series": "^1.0.0",
     "p-reflect": "^1.0.0",
+    "pretty-ms": "^3.2.0",
+    "rimraf": "^2.6.2",
     "supports-color": "^5.4.0"
   },
   "devDependencies": {
-    "asia": "^0.15.0",
+    "asia": "^0.16.1",
     "gitcommit": "^1.0.7",
-    "mukla": "^0.4.9",
     "nyc": "^12.0.2",
     "xaxa": "^1.3.6",
     "zen-observable": "^0.8.8"

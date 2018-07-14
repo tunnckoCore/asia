@@ -1,7 +1,7 @@
 'use strict';
 
 const proc = require('process');
-const test = require('asia');
+const test = require('../src');
 const api = require('../src/api');
 const { createReporter } = require('../src/utils');
 
@@ -18,7 +18,7 @@ test('asia should throw if title is not a string', (t) => {
     asia(123);
   }
 
-  t.throws(fixture, /expect title/);
+  t.throws(fixture, /expect `title`/);
 });
 
 test('asia should throw if testFn is not a function', (t) => {
@@ -27,7 +27,7 @@ test('asia should throw if testFn is not a function', (t) => {
     asia('foo bar baz');
   }
 
-  t.throws(fixture, /expect testFn/);
+  t.throws(fixture, /expect `testFn`/);
 });
 
 test('asia.run should run the tests in parallel', async (t) => {
@@ -38,7 +38,11 @@ test('asia.run should run the tests in parallel', async (t) => {
     tAssert.ok(true);
     count += 1;
   });
+
+  asia.todo('test without implementation');
+
   asia.skip('skipping test, yeah', () => {});
+
   asia('some failing test', (tAssert) => {
     count += 1;
     tAssert.ok(false);
@@ -47,10 +51,11 @@ test('asia.run should run the tests in parallel', async (t) => {
   await t.nextTick(async () => {
     const { stats } = await asia.run();
 
-    t.strictEqual(stats.count, 3);
+    t.strictEqual(stats.count, 4);
     t.strictEqual(stats.pass, 1);
     t.strictEqual(stats.fail, 1);
     t.strictEqual(stats.skip, 1);
+    t.strictEqual(stats.todo, 1);
     t.strictEqual(count, 2);
   });
 });
