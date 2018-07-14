@@ -3,7 +3,7 @@
 /* eslint-disable global-require */
 
 function defineProp(obj, key, get) {
-  Object.defineProperty(obj, key, { get });
+  Object.defineProperty(obj, key, { get, enumerable: true });
 }
 
 const reporters = {};

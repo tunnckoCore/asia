@@ -8,7 +8,8 @@ const CACHE = { time: {} };
 const skipped = [];
 const reporter = new Emitter();
 
-module.exports = ({ ansi, parsedArgv, utils, filename /* , content */ }) => {
+module.exports = function miniReporter(reporterOptions) {
+  const { ansi, parsedArgv, utils, filename /* , content */ } = reporterOptions;
   reporter.name = 'mini';
 
   reporter.on('error', (err) => {

@@ -7,7 +7,7 @@ const utils = require('../utils');
 
 const reporter = new Emitter();
 
-module.exports = ({ ansi, parsedArgv, filename }) => {
+module.exports = function codeframeReporter({ ansi, parsedArgv, filename }) {
   reporter.name = 'codeframe';
 
   reporter.on('pass', (meta, { skip, title }) => {

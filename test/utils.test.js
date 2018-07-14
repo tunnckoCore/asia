@@ -8,6 +8,7 @@ const {
   createReporter,
   getRelativePath,
   getCodeInfo,
+  isInstalled,
 } = require('../src/utils');
 
 test('getRelativePath returns a string without throwing', (t) => {
@@ -50,6 +51,8 @@ test('getReporter returns default "mini" reporter when no argv', (t) => {
 
   t.strictEqual(typeof getReporter(), 'function');
   t.strictEqual(typeof reporter, 'object');
+  t.strictEqual(typeof reporter.on, 'function');
+  t.strictEqual(typeof reporter.emit, 'function');
   t.strictEqual(reporter.name, 'mini');
 });
 
@@ -64,4 +67,16 @@ test('getReporter returns reporter when --reporter is passed', (t) => {
     parsedArgv: { reporter: './src/reporters/codeframe.js' },
   });
   t.strictEqual(reporter.name, 'codeframe');
+});
+
+test('isInstalled should return true if `name` is installed', (t) => {
+  t.strictEqual(isInstalled('p-map'), true);
+});
+
+test('getReporter should load builtin reporters only by name', (t) => {
+  const reporterFn = getReporter({ reporter: 'codeframe' });
+  const emitter = reporterFn({});
+
+  t.strictEqual(reporterFn.name, 'codeframeReporter');
+  t.strictEqual(emitter.name, 'codeframe');
 });

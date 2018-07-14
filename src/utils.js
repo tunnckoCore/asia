@@ -90,6 +90,7 @@ function getParsedArgv({ argv = [], env = {} }) {
         '**/fixtures/**',
         '**/coverage/**',
         '**/helpers/**',
+        '**/support/**',
         '**/.git',
       ],
       input: [
@@ -153,12 +154,6 @@ function nextTick(fn) {
   return promise;
 }
 
-function createError(msg) {
-  const err = new Error(msg);
-  err.name = 'AsiaError';
-  return err;
-}
-
 function createSnaps(parsedArgv, filename) {
   if (!parsedArgv.snapshots) {
     return null;
@@ -191,7 +186,6 @@ module.exports = {
   getRelativePath,
   getCodeInfo,
   createReporter,
-  createError,
   createSnaps,
   isInstalled,
 };

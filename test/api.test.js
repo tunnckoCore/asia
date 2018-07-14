@@ -1,6 +1,7 @@
 'use strict';
 
 const proc = require('process');
+const Observable = require('zen-observable');
 const test = require('../src');
 const api = require('../src/api');
 const { createReporter } = require('../src/utils');
@@ -12,26 +13,34 @@ const reporter = createReporter({
   parsedArgv,
 });
 
-test('asia should throw if title is not a string', (t) => {
-  const asia = api();
-  function fixture() {
-    asia(123);
-  }
+test('asia should emit TypeError if title is not a string', (t) => {
+  let called = false;
+  reporter.once('error', (err) => {
+    t.ok(err.message.includes('expect `title`'));
+    called = true;
+  });
 
-  t.throws(fixture, /expect `title`/);
+  const asia = api(reporter);
+
+  asia(123);
+  t.ok(called);
 });
 
-test('asia should throw if testFn is not a function', (t) => {
-  const asia = api();
-  function fixture() {
-    asia('foo bar baz');
-  }
+test('asia should emit TypeError if testFn is not a function', (t) => {
+  let called = false;
+  reporter.once('error', (err) => {
+    t.ok(err.message.includes('expect `testFn`'));
+    called = true;
+  });
 
-  t.throws(fixture, /expect `testFn`/);
+  const asia = api(reporter);
+
+  asia('foo bar baz');
+  t.ok(called);
 });
 
 test('asia.run should run the tests in parallel', async (t) => {
-  const asia = api(reporter);
+  const asia = api(reporter, { snapshots: false });
   let count = 0;
 
   asia('yeah passing', (tAssert) => {
@@ -61,7 +70,7 @@ test('asia.run should run the tests in parallel', async (t) => {
 });
 
 test('asia.run should run tests in series', async (t) => {
-  const asia = api(reporter, { concurrency: 1 });
+  const asia = api(reporter, { snapshots: false, concurrency: 1 });
   const arr = [];
 
   asia('foo bar', () => {
@@ -76,5 +85,127 @@ test('asia.run should run tests in series', async (t) => {
     t.strictEqual(arr.length, 2);
     t.strictEqual(arr[0], 1);
     t.strictEqual(arr[1], 2);
+  });
+});
+
+test('.todo should emit TypeError if pass implementation function', (t) => {
+  let called = false;
+  reporter.on('error', (err) => {
+    t.ok(err.message.includes('todo does expect only title'));
+    called = true;
+  });
+  const asia = api(reporter, { snapshots: false });
+
+  asia.todo('foo bar', () => {});
+  t.ok(called);
+});
+
+test.skip('should emit TypeError if options.match is not a string if given', (t) => {
+  let called = false;
+  reporter.on('error', (err) => {
+    t.ok(err.message.includes('options.match should be string, when given'));
+    called = true;
+  });
+
+  const asia = api(reporter, { match: ['t*', '*e'], snapshots: false });
+
+  asia('one', () => {});
+  asia('two', () => {});
+  asia('three', () => {});
+  t.ok(called);
+});
+
+test('should run only tests that match given glob pattern', async (t) => {
+  const asia = api(reporter, { match: '*b*', snapshots: false });
+  let count = 0;
+
+  asia('abc', (tst) => {
+    tst.ok(true);
+    count += 1;
+  });
+  asia('adef', (tst) => {
+    tst.ok(true);
+    count += 1;
+  });
+  asia('abar', (tst) => {
+    tst.ok(true);
+    count += 1;
+  });
+
+  await t.nextTick(async () => {
+    const { stats } = await asia.run();
+
+    t.strictEqual(count, 2);
+    t.strictEqual(stats.count, 3);
+    t.strictEqual(stats.pass, 2);
+  });
+});
+
+test('should have hooks - before, beforeEach, afterEach, after', async (t) => {
+  const calls = {};
+  const asia = api(reporter, { snapshots: false });
+
+  asia.before(() => {
+    calls.before = true;
+  });
+  asia.beforeEach(() => {
+    t.ok(calls.before, 'the "before" should be called previously');
+    calls.beforeEach = true;
+  });
+  asia('foo bar baz', () => {
+    t.ok(calls.beforeEach, 'the "beforeEach" hook should be called previously');
+    calls.test = true;
+  });
+  asia.afterEach(() => {
+    t.ok(calls.test, 'the test should be called before the "afterEach" hook');
+    calls.afterEach = true;
+  });
+  asia.after(() => {
+    t.ok(calls.afterEach, 'the "afterEach" hook should be called previously');
+    calls.after = true;
+  });
+
+  await t.nextTick(async () => {
+    const { stats } = await asia.run();
+
+    t.ok(stats.count === 1);
+    t.ok(stats.pass === 1);
+
+    t.deepEqual(calls, {
+      before: true,
+      beforeEach: true,
+      test: true,
+      afterEach: true,
+      after: true,
+    });
+  });
+});
+
+test('should work for Observables', async (t) => {
+  let called = 0;
+  const asia = api(reporter, { snapshots: false });
+
+  asia('some test returning observable', () => {
+    const observable = Observable.of(1, 2, 3, 4, 5, 6);
+
+    return observable
+      .filter(
+        (n) =>
+          // Only even numbers
+          n % 2 === 0,
+      )
+      .map((v) => {
+        called += 1;
+        return v;
+      });
+  });
+
+  await t.nextTick(async () => {
+    const { stats, results } = await asia.run();
+
+    t.strictEqual(called, 3);
+    t.strictEqual(stats.pass, 1);
+    t.strictEqual(stats.count, 1);
+    t.deepStrictEqual(results[0].value, [2, 4, 6]);
   });
 });
