@@ -92,19 +92,26 @@ module.exports = function codeframeReporter({ ansi, utils, parsedArgv }) {
         content: meta.content,
         err: test.reason,
       });
-      const [, at, filepath] = /at (.+) \((.+)\)/.exec(atLine);
-
-      console.log(
-        `${ansi.red('fail')}:`,
-        ansi.bold(test.title),
-        ansi.dim(`(${at})`),
-        'at',
-        `${ansi.green(getRelativePath(filepath))}:`,
-      );
 
       if (ok) {
+        const [, at, filepath] = /at (.+) \((.+)\)/.exec(atLine);
+
+        console.log(
+          `${ansi.red('fail')}:`,
+          ansi.bold(test.title),
+          ansi.dim(`(${at})`),
+          'at',
+          `${ansi.green(getRelativePath(filepath))}:`,
+        );
         console.log(sourceFrame);
       } else {
+        console.log(
+          `${ansi.red('fail')}:`,
+          ansi.bold(test.title),
+          ansi.dim(`(null)`),
+          'at',
+          `${ansi.green(getRelativePath(meta.filename))}:`,
+        );
         console.log(ansi.red(test.reason.stack));
       }
     } else if (test.isFulfilled && parsedArgv.min === false) {
