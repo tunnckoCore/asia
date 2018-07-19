@@ -29,6 +29,10 @@ function getRelativePath(fp) {
 }
 
 function getReporter(argv = {}) {
+  if (isCI) {
+    argv.reporter = 'tap'; // eslint-disable-line no-param-reassign
+  }
+
   if (typeof argv.reporter === 'string') {
     /* eslint-disable global-require, import/no-dynamic-require */
 
