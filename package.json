@@ -53,6 +53,9 @@
     "supports-color": "^5.4.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.0-beta.54",
+    "@babel/preset-env": "^7.0.0-beta.54",
+    "@babel/register": "^7.0.0-beta.54",
     "asia": "^0.17.1",
     "gitcommit": "^1.0.7",
     "nyc": "^12.0.2",

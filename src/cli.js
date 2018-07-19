@@ -49,12 +49,14 @@ fastGlob(input, Object.assign(parsedArgv, { absolute: true }))
     if (exitCodes.filter(Boolean).length > 0) {
       proc.exit(1);
     }
-  });
+  })
+  .catch(console.error);
 
 function onmessage({ type, meta, data }) {
   switch (type) {
     case 'error':
     case 'critical': {
+      console.log('x', data.reason);
       reporter.emit(type, meta, data.reason);
       break;
     }

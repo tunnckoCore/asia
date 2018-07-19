@@ -28,6 +28,8 @@ test('some slow yeah', async (t) => {
   t.ok(true);
 });
 
+test.todo('foo abr baz');
+
 test.skip('failing but skipped', (t) => {
   t.fail('should fail');
 });
@@ -38,7 +40,7 @@ test('one more passing', (t) => {
   t.ok(true);
 });
 
-test('foo qxueie', async (t) => {
-  const res = await import('./src/reporters/noop');
-  t.ok(res.default);
-});
+// test('foo qxueie', async (t) => {
+//   const res = await import('./src/reporters/noop');
+//   t.ok(res.default);
+// });

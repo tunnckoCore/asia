@@ -10,15 +10,12 @@ const globalStats = [];
 function createLines(meta, test) {
   const title = `${path.relative(proc.cwd(), meta.filename)} > ${test.title}`;
   const ok = test.isRejected ? 'not ok' : 'ok';
+  const todo = test.todo ? '# TODO' : '';
+  const type = test.skip ? '# SKIP' : todo;
 
   id += 1;
 
-  console.log(
-    [
-      `# ${title}`,
-      [ok, id, '-', title, test.skip ? '# SKIP' : ''].join(' '),
-    ].join('\n'),
-  );
+  console.log([`# ${title}`, [ok, id, '-', title, type].join(' ')].join('\n'));
 }
 
 module.exports = function tapReporter() {
@@ -58,6 +55,10 @@ module.exports = function tapReporter() {
 
     if (stats.skip) {
       console.log('# skip', stats.skip);
+    }
+
+    if (stats.todo) {
+      console.log('# todo', stats.todo);
     }
 
     if (stats.fail) {
