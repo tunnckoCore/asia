@@ -1,5 +1,6 @@
 'use strict';
 
+const isCI = require('is-ci');
 const test = require('../src');
 
 const {
@@ -46,7 +47,9 @@ test('getParsedArgv gets correct when no env given', (t) => {
   t.strictEqual(argv.foobar, 'hohoho');
 });
 
-test('getReporter returns default "mini" reporter when no argv', (t) => {
+const testFn = isCI ? test.skip : test;
+
+testFn('getReporter returns default "mini" reporter when no argv', (t) => {
   const reporter = createReporter();
 
   t.strictEqual(typeof getReporter(), 'function');
