@@ -35,6 +35,7 @@ module.exports = function miniReporter(reporterOptions) {
     CACHE.time.start = Date.now();
   });
 
+  // TODO: show `todo` tests and count when `--no-min`
   reporter.on('after', ({ stats, filename }) => {
     CACHE.time.ms = Date.now() - CACHE.time.start;
 
