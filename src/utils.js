@@ -139,8 +139,9 @@ function getCodeInfo({ parsedArgv = {}, content, filename, err }) {
     };
 
     const sourceFrame = babelCode.codeFrameColumns(source, loc, opts);
+    const at = atLine.replace('file://', '').trim();
 
-    return { ok: true, sourceFrame, atLine: atLine.replace('file://', '') };
+    return { ok: true, sourceFrame, atLine: at };
   }
 
   return { ok: false };

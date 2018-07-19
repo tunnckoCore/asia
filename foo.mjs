@@ -34,7 +34,7 @@ test('some slow yeah', async (t) => {
   t.ok(true);
 });
 
-test.todo('foo abr baz');
+test.todo('some without implementation');
 
 test.skip('failing but skipped', (t) => {
   t.fail('should fail');
