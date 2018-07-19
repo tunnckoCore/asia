@@ -8,14 +8,19 @@
 const Observable = require('zen-observable');
 const test = require('./src/index');
 
-test.afterEach(({ stats }, { title }) => {
-  console.log('after test:', title);
-  console.log('stats:', stats);
-  console.log('======');
-});
+// test.afterEach(({ stats }, { title }) => {
+//   console.log('after test:', title);
+//   console.log('stats:', stats);
+//   console.log('======');
+// });
 
-test.after(() => {
-  console.log('after hook');
+// test.after(() => {
+//   console.log('after hook');
+// });
+
+test('some failing fooh', (t) => {
+  sasa;
+  t.ok(true);
 });
 
 test('generators', function* gen(t) {

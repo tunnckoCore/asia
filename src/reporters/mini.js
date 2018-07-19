@@ -9,13 +9,13 @@ const skipped = [];
 const reporter = new Emitter();
 
 module.exports = function miniReporter(reporterOptions) {
-  const { ansi, parsedArgv, utils, filename /* , content */ } = reporterOptions;
+  const { ansi, parsedArgv, utils /* , content */ } = reporterOptions;
   reporter.name = 'mini';
 
-  reporter.on('error', (err) => {
+  reporter.on('error', (meta, err) => {
     const { ok, sourceFrame, atLine } = utils.getCodeInfo({
       parsedArgv,
-      filename,
+      filename: meta.filename,
       err,
     });
 
@@ -34,7 +34,8 @@ module.exports = function miniReporter(reporterOptions) {
   reporter.on('before', () => {
     CACHE.time.start = Date.now();
   });
-  reporter.on('after', ({ stats }) => {
+
+  reporter.on('after', ({ stats, filename }) => {
     CACHE.time.ms = Date.now() - CACHE.time.start;
 
     const { pass, fail, skip } = stats;
@@ -69,7 +70,7 @@ module.exports = function miniReporter(reporterOptions) {
       '\n',
     );
 
-    proc.exit(fail ? 1 : 0);
+    // proc.exit(fail ? 1 : 0);
   });
 
   // reporter.on('afterEach', async ({ fileshots, filesnap }, test) => {});
@@ -79,7 +80,7 @@ module.exports = function miniReporter(reporterOptions) {
   });
 
   reporter.on('fail', (meta, test) => {
-    const { content } = meta;
+    const { content, filename } = meta;
 
     const { title, reason: err } = test;
 

@@ -1,6 +1,8 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
+const mkdirp = require('mkdirp');
 const parallel = require('p-map');
 const globrex = require('globrex');
 const pReflect = require('p-reflect');
@@ -14,7 +16,7 @@ const { assert } = require('./utils');
 
 let testsCache = {};
 
-module.exports = (reporter, apiOptions = {}, snapshots = {}) => {
+module.exports = (emit, apiOptions = {}, snapshots = {}) => {
   const options = Object.assign({}, apiOptions);
   const stats = { count: 0, pass: 0, fail: 0, todo: 0, skip: 0 };
   const meta = { stats, ...Object.assign({}, snapshots) };
@@ -30,11 +32,15 @@ module.exports = (reporter, apiOptions = {}, snapshots = {}) => {
 
   function asia(title, testFn, opts) {
     if (typeof title !== 'string') {
-      reporter.emit('error', new TypeError('expect `title` to be a string'));
+      emit('error', meta, {
+        reason: new TypeError('expect `title` to be a string'),
+      });
       return asia;
     }
     if (typeof testFn !== 'function') {
-      reporter.emit('error', new TypeError('expect `testFn` to be function'));
+      emit('error', meta, {
+        reason: new TypeError('expect `testFn` to be function'),
+      });
       return asia;
     }
 
@@ -80,7 +86,9 @@ module.exports = (reporter, apiOptions = {}, snapshots = {}) => {
 
   asia.todo = (title, arg) => {
     if (typeof arg === 'function') {
-      reporter.emit('error', new TypeError('test.todo does expect only title'));
+      emit('error', meta, {
+        reason: new TypeError('test.todo does expect only title'),
+      });
       return asia;
     }
 
@@ -91,26 +99,27 @@ module.exports = (reporter, apiOptions = {}, snapshots = {}) => {
     return asia(title, fakeFn, { todo: true });
   };
 
-  asia.before = (fn) => {
-    reporter.on('before', fn);
-    return asia;
-  };
-  asia.beforeEach = (fn) => {
-    reporter.on('beforeEach', fn);
-    return asia;
-  };
-  asia.afterEach = (fn) => {
-    reporter.on('afterEach', fn);
-    return asia;
-  };
-  asia.after = (fn) => {
-    reporter.on('after', fn);
-    return asia;
-  };
+  // TODO: think and re-introduce
+  // asia.before = (fn) => {
+  //   reporter.on('before', fn);
+  //   return asia;
+  // };
+  // asia.beforeEach = (fn) => {
+  //   reporter.on('beforeEach', fn);
+  //   return asia;
+  // };
+  // asia.afterEach = (fn) => {
+  //   reporter.on('afterEach', fn);
+  //   return asia;
+  // };
+  // asia.after = (fn) => {
+  //   reporter.on('after', fn);
+  //   return asia;
+  // };
 
   asia.run = () => {
     const flowFn = options.concurrency > 1 ? parallel : sequence;
-    const mapper = createMapper({ meta, reporter, options });
+    const mapper = createMapper({ meta, emit, options });
 
     let testsToRun = tests;
 
@@ -118,7 +127,7 @@ module.exports = (reporter, apiOptions = {}, snapshots = {}) => {
     if (options.match && typeof options.match !== 'string') {
       const error = new TypeError('options.match should be string, when given');
 
-      reporter.emit('error', error);
+      emit('error', meta, { reason: error });
       return Promise.reject(error);
     }
 
@@ -129,18 +138,19 @@ module.exports = (reporter, apiOptions = {}, snapshots = {}) => {
       );
     }
 
-    reporter.emit('before', meta);
+    emit('before', meta);
     return flowFn(testsToRun, mapper, options).then((results) => {
       /* istanbul ignore if */
       if (options.snapshots) {
         if (meta.filesnap && !fs.existsSync(meta.filesnap)) {
+          mkdirp.sync(path.dirname(meta.filesnap));
           fs.writeFileSync(meta.filesnap, JSON.stringify(testsCache, null, 2));
         }
       }
 
       const meth = { ...meta, results };
 
-      reporter.emit('after', meth);
+      emit('after', meth);
       return meth;
     });
   };
@@ -148,12 +158,12 @@ module.exports = (reporter, apiOptions = {}, snapshots = {}) => {
   return asia;
 };
 
-function createMapper({ meta, reporter, options }) {
+function createMapper({ meta, emit, options }) {
   return function mapper(test) {
     // TODO: fix, does not work correctly when in parallel
-    reporter.emit('beforeEach', meta, test);
+    emit('beforeEach', meta, test);
 
-    const done = createDone({ meta, reporter, test, options, same: false });
+    const done = createDone({ meta, emit, test, options, same: false });
     const cached = testsCache[test.title];
 
     let promise = Promise.resolve();
@@ -162,7 +172,7 @@ function createMapper({ meta, reporter, options }) {
     if (options.snapshots) {
       if (testsCache.exists === true && cached.run === false) {
         return pReflect(promise).then(
-          createDone({ meta, reporter, test: cached, options, same: true }),
+          createDone({ meta, emit, test: cached, options, same: true }),
         );
       }
     }
@@ -184,7 +194,7 @@ function createMapper({ meta, reporter, options }) {
 }
 
 /* eslint-disable max-statements */
-function createDone({ meta, reporter, test: t, options, same }) {
+function createDone({ meta, emit, test: t, options, same }) {
   return function ondone(result) {
     let test = null;
 
@@ -207,7 +217,7 @@ function createDone({ meta, reporter, test: t, options, same }) {
       meta.stats.fail += 1;
 
       test.reason.stack = cleanup(test.reason.stack);
-      reporter.emit('fail', meta, test);
+      emit('fail', meta, test);
 
       /* istanbul ignore if */
       if (options.snapshots) {
@@ -216,16 +226,16 @@ function createDone({ meta, reporter, test: t, options, same }) {
     }
     if (test.isFulfilled) {
       if (test.skip) {
-        reporter.emit('skip', meta, test);
+        emit('skip', meta, test);
       } else if (test.todo) {
-        reporter.emit('todo', meta, test);
+        emit('todo', meta, test);
       } else {
         meta.stats.pass += 1;
-        reporter.emit('pass', meta, test);
+        emit('pass', meta, test);
       }
     }
 
-    reporter.emit('afterEach', meta, test);
+    emit('afterEach', meta, test);
     return test;
   };
 }

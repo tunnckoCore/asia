@@ -13,8 +13,8 @@
   ],
   "scripts": {
     "lint": "xaxa",
-    "test": "asia",
-    "test-cov": "nyc asia -u",
+    "test": "node src/cli.js",
+    "test-cov": "nyc node src/cli.js -u",
     "commit-dry": "git status --porcelain && git add -A && gitcommit -sS",
     "commit": "yarn lint && yarn test && yarn commit-dry"
   },
@@ -37,7 +37,6 @@
     "ansi-colors": "^2.0.2",
     "arrayify": "^1.0.0",
     "clean-stacktrace": "^1.1.0",
-    "execa": "^0.10.0",
     "fast-glob": "^2.2.2",
     "globrex": "^0.1.1",
     "is-ci": "^1.1.0",
@@ -50,6 +49,7 @@
     "p-reflect": "^1.0.0",
     "pretty-ms": "^3.2.0",
     "rimraf": "^2.6.2",
+    "serialize-error": "^2.1.0",
     "supports-color": "^5.4.0"
   },
   "devDependencies": {

@@ -8,6 +8,7 @@ function defineProp(obj, key, get) {
 
 const reporters = {};
 
+defineProp(reporters, 'tap', () => require('./tap'));
 defineProp(reporters, 'noop', () => require('./noop'));
 defineProp(reporters, 'mini', () => require('./mini'));
 defineProp(reporters, 'codeframe', () => require('./codeframe'));

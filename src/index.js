@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const proc = require('process');
-const ansi = require('ansi-colors');
+const serializeError = require('serialize-error');
 const utils = require('./utils');
 const api = require('./api');
 
@@ -12,41 +12,51 @@ if (!proc.env.ASIA_CLI) {
   proc.exit(1);
 }
 
-const parsedArgv = JSON.parse(proc.env.ASIA_ARGV);
-ansi.enabled = parsedArgv.color;
+function emit(name, meta = {}, data = {}) {
+  const { args, reason, ...item } = data;
+  const msg = { type: name, meta, data: item };
 
-const filename = proc.env.ASIA_TEST_FILE || __filename;
-const content = fs.readFileSync(filename, 'utf-8');
-const reporter = utils.createReporter({
-  parsedArgv,
-  utils,
-  ansi,
-  content,
-  filename,
-});
+  if (reason) {
+    msg.data.reason = serializeError(reason);
+  }
+  proc.send(msg);
 
-proc.on('uncaughtException', (err) => {
-  reporter.emit('error', err);
+  return { meta, data };
+}
+
+proc.on('uncaughtException', (reason) => {
+  emit('critical', null, { reason });
   proc.exit(1);
 });
 
+const filename = proc.env.ASIA_TEST_FILE || __filename;
+const content = fs.readFileSync(filename, 'utf-8');
+const parsedArgv = JSON.parse(proc.env.ASIA_ARGV);
 let snap = {};
 
 if (parsedArgv.snapshots) {
   snap = utils.createSnaps(parsedArgv, filename);
 }
+
 if (parsedArgv.serial === true) {
   parsedArgv.concurrency = 1;
 }
 
-const asia = api(reporter, parsedArgv, {
+const asia = api(emit, parsedArgv, {
   content,
   ...snap,
   filename,
 });
 
 proc.nextTick(() => {
-  asia.run();
+  /* eslint-disable promise/catch-or-return, promise/prefer-await-to-then */
+  /* eslint-disable promise/always-return */
+  asia.run().then(({ results }) => {
+    const hasFails = results.filter((x) => x.reason).length;
+    if (hasFails) {
+      proc.exit(1);
+    }
+  });
 });
 
 module.exports = asia;
