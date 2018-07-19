@@ -25,7 +25,7 @@ function emit(name, meta = {}, data = {}) {
 }
 
 proc.on('uncaughtException', (reason) => {
-  emit('critical', null, { reason });
+  emit('critical', {}, { reason });
   proc.exit(1);
 });
 

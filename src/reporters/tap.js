@@ -15,12 +15,35 @@ function createLines(meta, test) {
 
   id += 1;
 
+  // TODO: show yaml diagnostics when "not ok"
+
   console.log([`# ${title}`, [ok, id, '-', title, type].join(' ')].join('\n'));
 }
 
-module.exports = function tapReporter() {
+module.exports = function tapReporter(options) {
   const reporter = new Emitter();
   reporter.name = 'tap';
+
+  // TODO: follow tap spec for reporting errors
+  function onerror(meta, err) {
+    const { ok, sourceFrame, atLine } = options.utils.getCodeInfo({
+      parsedArgv: options.parsedArgv,
+      filename: meta.filename,
+      err,
+    });
+
+    if (ok) {
+      console.error(options.ansi.bold.bgRed('  CRITICAL  '), atLine);
+      console.error(sourceFrame);
+    } else {
+      console.error(options.ansi.bold.bgRed('  CRITICAL  '));
+      console.error(options.ansi.red(err.stack));
+    }
+    console.error('');
+  }
+
+  reporter.once('error', onerror);
+  reporter.once('critical', onerror);
 
   reporter.once('start', () => {
     console.log('TAP version 13');

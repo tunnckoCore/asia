@@ -18,7 +18,7 @@ const input = arrayify(inputFiles);
 const reducer = (acc, req) => acc.concat('--require', req);
 const requires = arrayify(parsedArgv.require).reduce(reducer, []);
 
-/* eslint-disable promise/always-return, promise/catch-or-return */
+/* eslint-disable promise/always-return */
 
 const reporter = utils.createReporter({ parsedArgv, utils, ansi });
 
@@ -56,7 +56,6 @@ function onmessage({ type, meta, data }) {
   switch (type) {
     case 'error':
     case 'critical': {
-      console.log('x', data.reason);
       reporter.emit(type, meta, data.reason);
       break;
     }

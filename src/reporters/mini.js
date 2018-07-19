@@ -1,6 +1,5 @@
 'use strict';
 
-const proc = require('process');
 const Emitter = require('events');
 const prettyMs = require('pretty-ms');
 
@@ -12,7 +11,7 @@ module.exports = function miniReporter(reporterOptions) {
   const { ansi, parsedArgv, utils /* , content */ } = reporterOptions;
   reporter.name = 'mini';
 
-  reporter.on('error', (meta, err) => {
+  function onerror(meta, err) {
     const { ok, sourceFrame, atLine } = utils.getCodeInfo({
       parsedArgv,
       filename: meta.filename,
@@ -27,9 +26,10 @@ module.exports = function miniReporter(reporterOptions) {
       console.error(ansi.red(err.stack));
     }
     console.error('');
+  }
 
-    proc.exit(1);
-  });
+  reporter.once('error', onerror);
+  reporter.once('critical', onerror);
 
   reporter.on('before', () => {
     CACHE.time.start = Date.now();

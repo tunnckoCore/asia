@@ -1,4 +1,10 @@
-'use strict';
+/**
+ * Example using `@babel/register` as require hook
+ *
+ * Run this file with `node src/cli.js foo.mjs -R tap -r @babel/register`.
+ * Note that when you are using `asia` you need to add them to your
+ * dependencies, and it will you Babel config automatically wherever it is.
+ */
 
 import test from './src/index';
 
