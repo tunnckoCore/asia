@@ -101,7 +101,7 @@ module.exports = function codeframeReporter({ ansi, utils, parsedArgv }) {
           ansi.bold(test.title),
           ansi.dim(`(${at})`),
           'at',
-          `${ansi.green(getRelativePath(filepath))}:`,
+          `${ansi.green(getRelativePath(filepath))}`,
         );
         console.log(sourceFrame);
       } else {
@@ -110,7 +110,7 @@ module.exports = function codeframeReporter({ ansi, utils, parsedArgv }) {
           ansi.bold(test.title),
           ansi.dim(`(null)`),
           'at',
-          `${ansi.green(getRelativePath(meta.filename))}:`,
+          `${ansi.green(getRelativePath(meta.filename))}`,
         );
         console.log(ansi.red(test.reason.stack));
       }
