@@ -30,6 +30,10 @@
   },
   "nyc": {
     "cache": true,
+    "reporter": [
+      "lcov",
+      "text"
+    ],
     "exclude": [
       "src/{cli,index}.js",
       "src/reporters",
