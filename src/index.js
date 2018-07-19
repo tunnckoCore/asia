@@ -38,15 +38,6 @@ if (parsedArgv.snapshots) {
 if (parsedArgv.serial === true) {
   parsedArgv.concurrency = 1;
 }
-if (
-  utils.isInstalled('@babel/register') ||
-  utils.isInstalled('babel-register')
-) {
-  parsedArgv.snapshots = false;
-}
-if (utils.isInstalled('esm')) {
-  parsedArgv.snapshots = true;
-}
 
 const asia = api(reporter, parsedArgv, {
   content,
