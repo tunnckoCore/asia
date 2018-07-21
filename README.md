@@ -33,7 +33,7 @@ Project is [semantically](https://semver.org) & automatically released on [Circl
 ## Install
 
 This project requires [**Node.js**][nodeversion-url] **^8.9.0 || ^10.6.0**. Install it using [**yarn**](https://yarnpkg.com) or [**npm**](https://npmjs.com).  
-We highly recommend to use Yarn when you think to contribute to this project.
+_We highly recommend to use Yarn when you think to contribute to this project._
 
 ```bash
 $ yarn add asia --dev
