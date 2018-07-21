@@ -183,6 +183,34 @@ function createSnaps(parsedArgv, filename) {
   return { filesnap, fileshots };
 }
 
+function createOnMessage(reporter) {
+  return function onmessage({ type, meta, data }) {
+    switch (type) {
+      case 'error':
+      case 'critical': {
+        reporter.emit(type, meta, data.reason);
+        break;
+      }
+
+      case 'before':
+      case 'after':
+      case 'beforeEach':
+      case 'afterEach':
+      case 'pass':
+      case 'fail':
+      case 'skip':
+      case 'todo': {
+        reporter.emit(type, meta, data);
+        break;
+      }
+
+      default: {
+        break;
+      }
+    }
+  };
+}
+
 module.exports = {
   assert: Object.assign(assert, { nextTick }),
   getReporter,
@@ -190,6 +218,7 @@ module.exports = {
   getRelativePath,
   getCodeInfo,
   createReporter,
+  createOnMessage,
   createSnaps,
   isInstalled,
 };

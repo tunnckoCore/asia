@@ -20,7 +20,13 @@ const requires = arrayify(parsedArgv.require).reduce(reducer, []);
 
 /* eslint-disable promise/always-return */
 
+if (proc.env.NYC_CWD) {
+  parsedArgv.u = true;
+  parsedArgv.update = true;
+}
+
 const reporter = utils.createReporter({ parsedArgv, utils, ansi });
+const onmessage = utils.createOnMessage(reporter);
 
 proc.env.ASIA_CLI = true;
 proc.env.ASIA_ARGV = JSON.stringify(parsedArgv);
@@ -51,29 +57,3 @@ fastGlob(input, Object.assign(parsedArgv, { absolute: true }))
     }
   })
   .catch(console.error);
-
-function onmessage({ type, meta, data }) {
-  switch (type) {
-    case 'error':
-    case 'critical': {
-      reporter.emit(type, meta, data.reason);
-      break;
-    }
-
-    case 'before':
-    case 'after':
-    case 'beforeEach':
-    case 'afterEach':
-    case 'pass':
-    case 'fail':
-    case 'skip':
-    case 'todo': {
-      reporter.emit(type, meta, data);
-      break;
-    }
-
-    default: {
-      break;
-    }
-  }
-}
