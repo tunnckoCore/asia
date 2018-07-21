@@ -22,24 +22,6 @@
     "commit": "gitcommit -sS",
     "cm": "git status --porcelain && git add . && gitcommit -sS"
   },
-  "eslintConfig": {
-    "extends": "xaxa"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "nyc": {
-    "cache": true,
-    "reporter": [
-      "lcov",
-      "text"
-    ],
-    "exclude": [
-      "src/{cli,index}.js",
-      "src/reporters",
-      "test"
-    ]
-  },
   "dependencies": {
     "@babel/code-frame": "^7.0.0-beta.52",
     "ansi-colors": "^2.0.2",
@@ -69,6 +51,24 @@
     "nyc": "^12.0.2",
     "xaxa": "^1.3.6",
     "zen-observable": "^0.8.8"
+  },
+  "eslintConfig": {
+    "extends": "xaxa"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "nyc": {
+    "cache": true,
+    "reporter": [
+      "lcov",
+      "text"
+    ],
+    "exclude": [
+      "src/{cli,index}.js",
+      "src/reporters",
+      "test"
+    ]
   },
   "verb": {
     "reflinks": [
