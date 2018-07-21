@@ -18,9 +18,9 @@
   "scripts": {
     "lint": "xaxa",
     "test": "nyc node src/cli.js",
-    "prettymd": "prettier '*.md' --write",
     "precommit": "yarn lint && yarn test && git status --porcelain && git add .",
-    "commit": "gitcommit -sS"
+    "commit": "gitcommit -sS",
+    "cm": "git status --porcelain && git add . && gitcommit -sS"
   },
   "eslintConfig": {
     "extends": "xaxa"
