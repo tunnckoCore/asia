@@ -69,7 +69,7 @@ module.exports = (emit, apiOptions = {}, snapshots = {}) => {
       if (testsCache[title].str !== test.str) {
         const cached = Object.assign({}, testsCache);
         cached[title].str = test.str;
-        fs.writeFileSync(meta.filesnap, JSON.stringify(cached, null, 2));
+        fs.writeFileSync(meta.filesnap, JSON.stringify(cached));
 
         testsCache[title].run = true;
       }
@@ -144,7 +144,7 @@ module.exports = (emit, apiOptions = {}, snapshots = {}) => {
       if (options.snapshots) {
         if (meta.filesnap && !fs.existsSync(meta.filesnap)) {
           mkdirp.sync(path.dirname(meta.filesnap));
-          fs.writeFileSync(meta.filesnap, JSON.stringify(testsCache, null, 2));
+          fs.writeFileSync(meta.filesnap, JSON.stringify(testsCache));
         }
       }
 
