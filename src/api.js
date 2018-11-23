@@ -10,11 +10,15 @@ import defaultReporter from './reporter';
  * On the `.test` method you can access the `skip` and `todo` methods.
  * For example `.test.skip(title, fn)` and `.test.todo(title)`.
  *
- * @example
- * import Asia from 'asia/src/api';
+ * This should be uses if you want to base something on top of the Asia API.
+ * By default, the main export e.g. just `'asia'` exposes a default export function,
+ * which is the `test()` method.
  *
- * // or in CommonJS
- * // const Asia = require('asia/cjs/api');
+ * @example
+ * import Asia from 'asia/dist/api/es';
+ *
+ * // or in CommonJS (Node.js)
+ * // const Asia = require('asia/dist/api/umd');
  *
  * const api = Asia({ serial: true });
  * console.log(api);
@@ -64,16 +68,18 @@ export default function Asia(options) {
    * or a "todo" test. For example `{ skip: true }`
    *
    * @example
+   * import assert from 'assert';
+   * import expect from 'expect';
    * import test from 'asia';
    *
-   * test('some awesome failing test', (t) => {
-   *   t.is(1, 2);
+   * test('some awesome failing test', () => {
+   *   expect(1).toBe(2);
    * });
    *
    * test('foo passing async test', async () => {
    *   const res = await Promise.resolve(123);
    *
-   *   t.is(res, 123);
+   *   assert.strictEqual(res, 123);
    * });
    *
    * @name  test
@@ -136,12 +142,13 @@ export default function Asia(options) {
    * than it will throw an error.
    *
    * @example
+   * import assert from 'assert';
    * import test from 'asia';
    *
    * test.todo('should be printed and okey');
    *
-   * test.todo('should throw, because does not expect test fn', (t) => {
-   *   t.ok(true);
+   * test.todo('should throw, because does not expect test fn', () => {
+   *   assert.ok(true);
    * });
    *
    * @name  test.todo
@@ -170,10 +177,28 @@ export default function Asia(options) {
 
 function createRun(tests, opts) {
   /**
-   * Run all tests, with optional `settings` options.
+   * Run all tests, with optional `settings` options, merged with those
+   * passed from the constructor.
    * Currently the supported options are `serial` and `concurrency`.
    *
-   * @name  run
+   * @example
+   * import delay from 'delay';
+   * import Asia from 'asia/dist/api/es';
+   *
+   * const api = Asia({ serial: true });
+   *
+   * api.test('first test', async () => {
+   *   await delay(1000);
+   *   console.log('one');
+   * });
+   *
+   * api.test('second test', () => {
+   *   console.log('two');
+   * });
+   *
+   * api.run({ concurrency: 10 });
+   *
+   * @name  .run
    * @param {object} settings for example, pass `serial: true` to run the tests serially
    * @return {Promise}
    * @public
