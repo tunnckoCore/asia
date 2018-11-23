@@ -20,6 +20,7 @@
   "dependencies": {},
   "devDependencies": {
     "@tunnckocore/scripts": "^1.2.3",
+    "dedent": "^0.7.0",
     "esm": "^3.0.84",
     "is-observable": "^1.1.0",
     "mixin-deep": "^2.0.0",
@@ -30,7 +31,8 @@
     "rollup": "^0.67.3",
     "rollup-plugin-commonjs": "^9.2.0",
     "rollup-plugin-node-resolve": "^3.4.0",
-    "rollup-plugin-terser": "^3.0.0"
+    "rollup-plugin-terser": "^3.0.0",
+    "zen-observable": "^0.8.11"
   },
   "files": [
     "src",

@@ -44,6 +44,7 @@ Project is [semantically](https://semver.org) & automatically released on [Circl
 - Secure environment, no implicit globals
 - [TAP Specification](https://testanything.org/tap-specification.html) compliant output reporting
 - Simple test syntax and enforce writing atomic tests
+- Clean stacktraces, when optionally shown
 - Works inside any CommonJS environment and the Browser
 - Support writing your tests in latest JavaScript syntax
 - Support `async/await` functions, Promises and Observables
@@ -178,7 +179,7 @@ _Generated using [docks](http://npm.im/docks)._
 
 ### [src/api.js](/src/api.js)
 
-#### [Asia](/src/api.js#L50)
+#### [Asia](/src/api.js#L49)
 Constructor which can be initialized with optional `options` object.
 On the `.test` method you can access the `skip` and `todo` methods.
 For example `.test.skip(title, fn)` and `.test.todo(title)`.
@@ -218,12 +219,10 @@ api.skip('same as above', () => {
 api.test.todo('test without implementaton');
 api.todo('test without implementaton');
 
-process.nextTick(() => {
-  api.run();
-});
+api.run();
 ```
 
-#### [test](/src/api.js#L91)
+#### [test](/src/api.js#L95)
 Define a regular test with `title` and `fn`.
 Both `title` and `fn` params are required, otherwise it will throw.
 Optionally you can pass `settings` options object, to make it a "skip"
@@ -251,7 +250,7 @@ test('foo passing async test', async () => {
 });
 ```
 
-#### [test.skip](/src/api.js#L135)
+#### [test.skip](/src/api.js#L139)
 Define test with `title` and `fn` that will never run,
 but will be shown in the output.
 
@@ -270,7 +269,7 @@ test.skip('should be skipped, but printed', () => {
 test.skip('should throw, because expect test implementation');
 ```
 
-#### [test.todo](/src/api.js#L159)
+#### [test.todo](/src/api.js#L163)
 Define a test with `title` that will be marked as "todo" test.
 Such tests do not have test implementaton function, if `fn` is given
 than it will throw an error.
@@ -291,7 +290,7 @@ test.todo('should throw, because does not expect test fn', () => {
 });
 ```
 
-#### [.run](/src/api.js#L206)
+#### [.run](/src/api.js#L213)
 Run all tests, with optional `settings` options, merged with those
 passed from the constructor.
 Currently the supported options are `serial` and `concurrency`.

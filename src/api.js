@@ -4,6 +4,7 @@ import mixinDeep from 'mixin-deep';
 import isObservable from 'is-observable';
 import observable2promise from 'observable-to-promise';
 import defaultReporter from './reporter';
+import { nextTick, noopReporter, hasProcess } from './utils';
 
 /**
  * Constructor which can be initialized with optional `options` object.
@@ -38,9 +39,7 @@ import defaultReporter from './reporter';
  * api.test.todo('test without implementaton');
  * api.todo('test without implementaton');
  *
- * process.nextTick(() => {
- *   api.run();
- * });
+ * api.run();
  *
  * @name  Asia
  * @param {object} options control tests `concurrency` or pass `serial: true` to run serially.
@@ -53,10 +52,15 @@ export default function Asia(options) {
     {
       args: [],
       stats,
-      serial: false,
-      concurrency: 4,
+      serial:
+        /* istanbul ignore next */ hasProcess && process.env.ASIA_SERIAL
+          ? Boolean(process.env.ASIA_SERIAL)
+          : false,
+      showStack:
+        /* istanbul ignore next */ hasProcess && process.env.ASIA_SHOW_STACK
+          ? Boolean(process.env.ASIA_SHOW_STACK)
+          : false,
     },
-    defaultReporter,
     options,
   );
   const tests = [];
@@ -98,7 +102,7 @@ export default function Asia(options) {
     }
 
     if (typeof title !== 'string') {
-      throw new TypeError('asia.test(): expect test `title` to be string');
+      throw new TypeError('asia.test(): expect test `title` be string');
     }
     if (typeof fn !== 'function') {
       throw new TypeError('asia.test(): expect test `fn` to be function');
@@ -160,7 +164,10 @@ export default function Asia(options) {
     if (typeof fn === 'function') {
       throw new TypeError('asia.test.todo(): do NOT expect test `fn`');
     }
-    addTest(title, () => {}, { todo: true });
+    /* istanbul ignore next */
+    const fakeFn = () => {};
+
+    addTest(title, fakeFn, { todo: true });
   }
 
   addTest.test = addTest;
@@ -203,12 +210,21 @@ function createRun(tests, opts) {
    * @return {Promise}
    * @public
    */
-  return async (settings) => {
+  return nextTick(async (settings) => {
     const options = mixinDeep({}, opts, settings);
     const flow = options.serial ? sequence : parallel;
     const results = [];
+    const reporter =
+      typeof options.reporter === 'function'
+        ? Object.assign({}, noopReporter, options.reporter({ tests, options }))
+        : defaultReporter({ tests, options });
 
-    await options.before(options);
+    /* istanbul ignore next */
+    if (typeof options.writeLine !== 'function') {
+      options.writeLine = console.log;
+    }
+
+    await reporter.before(options);
 
     return flow(
       tests,
@@ -217,7 +233,7 @@ function createRun(tests, opts) {
         sequence(
           [
             // Step 1: Before each test
-            () => options.beforeEach(item, options),
+            () => reporter.beforeEach(item, options),
 
             // Step 2: Run the test function
             async () => {
@@ -227,8 +243,12 @@ function createRun(tests, opts) {
                 item.value = value;
                 item.reason = reason;
                 if (item.reason) {
+                  item.fail = true;
+                  item.pass = false;
                   item.stats.fail += 1;
                 } else {
+                  item.fail = false;
+                  item.pass = true;
                   item.stats.pass += 1;
                 }
               }
@@ -237,7 +257,7 @@ function createRun(tests, opts) {
             },
 
             // Step 3: After each test function
-            () => options.afterEach(item, options),
+            () => reporter.afterEach(item, options),
           ],
           (step) => step(),
         ).then((steps) => {
@@ -245,17 +265,11 @@ function createRun(tests, opts) {
           results.push(steps[1]);
         }),
       options,
-    ).then(
-      async () => {
-        await options.after(options, results);
-        return { options, results };
-      },
-      async () => {
-        await options.after(options, results);
-        return { options, results };
-      },
-    );
-  };
+    ).then(async () => {
+      await reporter.after(options, results);
+      return { options, results, tests };
+    });
+  });
 }
 
 async function runTest(item, args) {
@@ -263,8 +277,8 @@ async function runTest(item, args) {
   let reason = null;
 
   try {
-    const val = item.fn.apply(null, args);
-    value = await (isObservable(val) ? observable2promise(val) : val);
+    const val = await item.fn.apply(null, args);
+    value = isObservable(val) ? await observable2promise(val) : val;
   } catch (err) {
     reason = err;
   }

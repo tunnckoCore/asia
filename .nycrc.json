@@ -12,5 +12,9 @@
   ],
   "include": [
     "src/**/*.js"
+  ],
+  "exclude": [
+    "test",
+    "src/node-internals.js"
   ]
 }

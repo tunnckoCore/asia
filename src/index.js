@@ -1,7 +1,7 @@
-import nextTick from 'next-job';
 import Asia from './api';
 import { normalizeError, hasProcess } from './utils';
 
+/* istanbul ignore next */
 if (hasProcess) {
   const onerror = (err) => {
     const { message, stack } = normalizeError(err);
@@ -17,6 +17,6 @@ const api = Asia();
 
 const mod = Object.assign(api.test, { Asia });
 
-nextTick(() => api.run());
+api.run();
 
 export default mod;

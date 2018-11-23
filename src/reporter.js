@@ -1,49 +1,62 @@
-import { normalizeError } from './utils';
+import { normalizeError, hasProcess } from './utils';
 
-export default {
+/* istanbul ignore next */
+if (hasProcess) {
+  process.env.NODE_DISABLE_COLORS = true;
+  process.env.FORCE_COLOR = 0;
+}
+
+export default ({ options }) => ({
   before() {
-    console.log('TAP version 13');
+    options.writeLine('TAP version 13');
   },
   beforeEach() {},
   afterEach(item) {
-    const ok = item.reason ? 'not ok' : 'ok';
-    const todo = item.todo ? '# TODO' : '';
-    const type = item.skip ? '# SKIP' : todo;
-
-    console.log(`# ${item.title}`);
-
     if (item.reason) {
+      options.writeLine('not ok %s - %s', item.id, item.title);
+
       const { message, head, stack } = normalizeError(item.reason);
-      console.log(ok, item.id, '-', item.title);
-      console.log('#');
-      console.log('# FAIL!', head);
-      console.log(message);
-      console.log(stack);
-      console.log('#');
-    } else {
-      console.log(ok, item.id, '-', item.title, type);
+
+      options.writeLine('# FAIL!', head);
+      options.writeLine(message);
+
+      if (options.showStack) {
+        options.writeLine(stack);
+      }
+      options.writeLine('#');
+      return;
     }
+    if (item.todo) {
+      options.writeLine('not ok %s - # TODO %s', item.id, item.title);
+      return;
+    }
+    if (item.skip) {
+      options.writeLine('ok %s - # SKIP %s', item.id, item.title);
+      return;
+    }
+
+    options.writeLine('ok %s - %s', item.id, item.title);
   },
 
-  after(options) {
-    console.log(`1..${options.stats.count}`);
-    console.log('# tests', options.stats.count);
-    console.log('# pass', options.stats.pass);
+  after({ stats }) {
+    options.writeLine(`1..${stats.count}`);
+    options.writeLine('# tests', stats.count);
+    options.writeLine('# pass', stats.pass);
 
-    if (options.stats.skip) {
-      console.log('# skip', options.stats.skip);
+    if (stats.skip) {
+      options.writeLine('# skip', stats.skip);
     }
 
-    if (options.stats.todo) {
-      console.log('# todo', options.stats.todo);
+    if (stats.todo) {
+      options.writeLine('# todo', stats.todo);
     }
 
-    if (options.stats.fail) {
-      console.log('# fail', options.stats.fail);
-      console.log('#');
+    if (stats.fail) {
+      options.writeLine('# fail', stats.fail);
+      options.writeLine('#');
     } else {
-      console.log('#');
-      console.log('# ok');
+      options.writeLine('#');
+      options.writeLine('# ok');
     }
   },
-};
+});
