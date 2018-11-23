@@ -1,62 +1,22 @@
-'use strict';
+import nextTick from 'next-job';
+import Asia from './api';
+import { normalizeError, hasProcess } from './utils';
 
-const fs = require('fs');
-const proc = require('process');
-const serializeError = require('serialize-error');
-const utils = require('./utils');
-const api = require('./api');
-
-if (!proc.env.ASIA_CLI) {
-  const err = new Error('run your tests through the asia cli');
-  console.error('AsiaError:', `${err.name}:`, err.message);
-  proc.exit(1);
+if (hasProcess) {
+  const onerror = (err) => {
+    const { message, stack } = normalizeError(err);
+    console.log(message);
+    console.log(stack);
+    process.exit(1);
+  };
+  process.on('uncaughtException', onerror);
+  process.on('unhandledRejection', onerror);
 }
 
-function emit(name, meta = {}, data = {}) {
-  const { args, reason, ...item } = data;
-  const msg = { type: name, meta, data: item };
+const api = Asia();
 
-  if (reason) {
-    msg.data.reason = serializeError(reason);
-  }
-  proc.send(msg);
+const mod = Object.assign(api.test, { Asia });
 
-  return { meta, data };
-}
+nextTick(() => api.run());
 
-proc.on('uncaughtException', (reason) => {
-  emit('critical', {}, { reason });
-  proc.exit(1);
-});
-
-const filename = proc.env.ASIA_TEST_FILE || __filename;
-const content = fs.readFileSync(filename, 'utf-8');
-const parsedArgv = JSON.parse(proc.env.ASIA_ARGV);
-let snap = {};
-
-if (parsedArgv.snapshots) {
-  snap = utils.createSnaps(parsedArgv, filename);
-}
-
-if (parsedArgv.serial === true) {
-  parsedArgv.concurrency = 1;
-}
-
-const asia = api(emit, parsedArgv, {
-  content,
-  ...snap,
-  filename,
-});
-
-proc.nextTick(() => {
-  /* eslint-disable promise/catch-or-return, promise/prefer-await-to-then */
-  /* eslint-disable promise/always-return */
-  asia.run().then(({ results }) => {
-    const hasFails = results.filter((x) => x.reason).length;
-    if (hasFails) {
-      proc.exit(1);
-    }
-  });
-});
-
-module.exports = asia;
+export default mod;
