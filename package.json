@@ -87,7 +87,9 @@
     },
     "reflinks": [
       "new-release",
-      "semantic-release"
+      "semantic-release",
+      "esm",
+      "nyc"
     ]
   }
 }
