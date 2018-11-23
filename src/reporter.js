@@ -3,7 +3,6 @@ import { normalizeError } from './utils';
 export default {
   before() {
     console.log('TAP version 13');
-    console.log('pragma +strict');
   },
   beforeEach() {},
   afterEach(item) {
