@@ -38,13 +38,13 @@
   ],
   "main": "dist/index.js",
   "module": "dist/index-es.js",
-  "version": "1.0.0-rc.8",
+  "version": "1.0.0-rc.9",
   "repository": "tunnckoCoreLabs/asia",
   "homepage": "https://github.com/tunnckoCoreLabs/asia",
   "author": "Charlike Mike Reagent (https://tunnckocore.com)",
   "publishConfig": {
     "access": "public",
-    "tag": "latest"
+    "tag": "next"
   },
   "renovate": {
     "extends": "tunnckocore"
