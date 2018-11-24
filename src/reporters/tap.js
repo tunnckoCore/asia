@@ -1,4 +1,4 @@
-import { normalizeError, hasProcess } from './utils';
+import { outputError, hasProcess } from '../utils';
 
 /* istanbul ignore next */
 if (hasProcess) {
@@ -15,15 +15,12 @@ export default ({ options }) => ({
     if (item.reason) {
       options.writeLine('not ok %s - %s', item.id, item.title);
 
-      const { message, head, stack } = normalizeError(item.reason);
+      const { stack } = outputError(item.reason, options);
 
-      options.writeLine('# FAIL!', head);
-      options.writeLine(message);
-
-      if (options.showStack) {
+      if (options.showStack && stack) {
         options.writeLine(stack);
+        options.writeLine('#');
       }
-      options.writeLine('#');
       return;
     }
     if (item.todo) {

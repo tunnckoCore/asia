@@ -3,8 +3,8 @@ import sequence from 'p-map-series';
 import mixinDeep from 'mixin-deep';
 import isObservable from 'is-observable';
 import observable2promise from 'observable-to-promise';
-import defaultReporter from './reporter';
-import { nextTick, noopReporter, hasProcess } from './utils';
+import defaultReporter from './reporters/tap';
+import { nextTick, noopReporter, hasProcess, importReporter } from './utils';
 
 /**
  * Constructor which can be initialized with optional `options` object.
@@ -52,6 +52,8 @@ export default function Asia(options) {
     {
       args: [],
       stats,
+      relativePaths: true,
+      proc: /* istanbul ignore next */ hasProcess ? process : {},
       serial:
         /* istanbul ignore next */ hasProcess && process.env.ASIA_SERIAL
           ? Boolean(process.env.ASIA_SERIAL)
@@ -214,10 +216,25 @@ function createRun(tests, opts) {
     const options = mixinDeep({}, opts, settings);
     const flow = options.serial ? sequence : parallel;
     const results = [];
-    const reporter =
-      typeof options.reporter === 'function'
-        ? Object.assign({}, noopReporter, options.reporter({ tests, options }))
-        : defaultReporter({ tests, options });
+    let reporter = defaultReporter({ tests, options });
+
+    if (typeof options.reporter === 'function') {
+      reporter = Object.assign(
+        {},
+        noopReporter,
+        options.reporter({ tests, options }),
+      );
+    }
+
+    /* istanbul ignore next */
+    if (typeof options.reporter === 'string' && hasProcess) {
+      const reporterFn = await importReporter(options.reporter);
+      reporter = Object.assign(
+        {},
+        noopReporter,
+        reporterFn({ tests, options }),
+      );
+    }
 
     /* istanbul ignore next */
     if (typeof options.writeLine !== 'function') {
@@ -236,25 +253,7 @@ function createRun(tests, opts) {
             () => reporter.beforeEach(item, options),
 
             // Step 2: Run the test function
-            async () => {
-              if (!item.skip && !item.todo) {
-                const { value, reason } = await runTest(item, options.args);
-
-                item.value = value;
-                item.reason = reason;
-                if (item.reason) {
-                  item.fail = true;
-                  item.pass = false;
-                  item.stats.fail += 1;
-                } else {
-                  item.fail = false;
-                  item.pass = true;
-                  item.stats.pass += 1;
-                }
-              }
-              options.stats = Object.assign({}, options.stats, item.stats);
-              return item;
-            },
+            stepTwo(item, options),
 
             // Step 3: After each test function
             () => reporter.afterEach(item, options),
@@ -270,6 +269,28 @@ function createRun(tests, opts) {
       return { options, results, tests };
     });
   });
+}
+
+async function stepTwo(item, options) {
+  return async () => {
+    if (!item.skip && !item.todo) {
+      const { value, reason } = await runTest(item, options.args);
+
+      item.value = value;
+      item.reason = reason;
+      if (item.reason) {
+        item.fail = true;
+        item.pass = false;
+        item.stats.fail += 1;
+      } else {
+        item.fail = false;
+        item.pass = true;
+        item.stats.pass += 1;
+      }
+    }
+    options.stats = Object.assign({}, options.stats, item.stats);
+    return item;
+  };
 }
 
 async function runTest(item, args) {

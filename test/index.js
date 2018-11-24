@@ -161,7 +161,11 @@ test('default reporter should output TAP report', async () => {
     not ok 4 - # TODO some todo test
     ok 1 - regular test
     not ok 2 - failing one
-    # FAIL! Input A expected to strictly equal input B:
+    # FAIL!
+    #
+    # At: api.test (./test/index.js:150:12)
+    #
+    # Message: Input A expected to strictly equal input B:
     # + expected - actual
     #
     # - 123
@@ -187,12 +191,13 @@ test('should test show stack if options.showStack: true', async () => {
   const api = Asia({ showStack: true, writeLine });
 
   api.test(() => {
-    throw new Error('ouch doh');
+    throw new Error('ouch auch');
   });
 
   await api.run();
 
   const tapOutput = output.join('\n');
-  assert.strictEqual(tapOutput.includes('# FAIL! ouch doh'), true);
+  assert.strictEqual(tapOutput.includes('# FAIL!'), true);
+  assert.strictEqual(tapOutput.includes('# Message: ouch auch'), true);
   assert.strictEqual(tapOutput.includes('# STACK!'), true);
 });
