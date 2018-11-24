@@ -354,7 +354,7 @@ $ yarn add asia
 ```
 
 If you want to create something on top of it, e.g. CLI for example,
-then you should cannot use the default export `import 'asia'`, because it exposes
+then you cannot use the default export `import 'asia'`, because it exposes
 the `test()` method and runs the tests, automatically.
 
 ### Server Side
