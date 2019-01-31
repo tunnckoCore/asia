@@ -44,7 +44,7 @@
   ],
   "main": "dist/index.js",
   "module": "dist/index-es.js",
-  "version": "1.0.0-rc.30",
+  "version": "1.0.0-rc.31",
   "repository": "tunnckoCoreLabs/asia",
   "homepage": "https://github.com/tunnckoCoreLabs/asia",
   "author": "Charlike Mike Reagent (https://tunnckocore.com)",
