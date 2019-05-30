@@ -1,224 +1,128 @@
-'use strict';
+import nextJob from 'next-job';
+import nodeInternals from './node-internals';
 
-const fs = require('fs');
-const path = require('path');
-const proc = require('process');
-const assert = require('assert');
-const isColors = require('supports-color').stdout;
-const babelCode = require('@babel/code-frame');
-const argvParser = require('mri');
-const mkdirp = require('mkdirp');
-const rimraf = require('rimraf');
-const isCI = require('is-ci');
-const reporters = require('./reporters');
+export const noopReporter = {
+  before: () => {},
+  beforeEach: () => {},
+  afterEach: () => {},
+  after: () => {},
+};
 
-function isInstalled(name) {
-  try {
-    // eslint-disable-next-line global-require, import/no-dynamic-require
-    require(name);
-  } catch (err) {
-    return false;
-  }
-  return true;
-}
-
-function getRelativePath(fp) {
-  const relDir = path.basename(path.dirname(fp));
-  const basename = path.basename(fp);
-  return `.${path.sep}${path.join(relDir, basename)}`;
-}
-
-function getReporter(argv = {}) {
-  if (isCI) {
-    return reporters.codeframe;
-  }
-
-  if (typeof argv.reporter === 'string') {
-    /* eslint-disable global-require, import/no-dynamic-require */
-
-    if (argv.reporter[0] === '.') {
-      return require(path.join(proc.cwd(), argv.reporter));
-    }
-
-    if (Object.keys(reporters).includes(argv.reporter)) {
-      const reporterPath = path.join(__dirname, 'reporters', argv.reporter);
-      return require(reporterPath);
-    }
-
-    const prefix = 'asia-reporter-';
-
-    if (isInstalled(prefix + argv.reporter)) {
-      return require(prefix + argv.reporter);
-    }
-
-    if (isInstalled(argv.reporter)) {
-      return require(argv.reporter);
-    }
-
-    console.warn('warn: reporter you are trying to load is not installed');
-    console.warn('warn: we automatically switching to the "mini" reporter');
-  }
-
-  return reporters.mini;
-}
-
-function getParsedArgv({ argv = [], env = {} }) {
-  if (env.ASIA_ARGV) {
-    return JSON.parse(env.ASIA_ARGV);
-  }
-  return argvParser(argv.slice(2), {
-    alias: {
-      u: 'update',
-      m: 'match',
-      r: 'require',
-      R: 'reporter',
-    },
-    default: {
-      match: null,
-      reporter: null,
-      min: true,
-      serial: false,
-      snapshots: true,
-      concurrency: 100,
-      color: isCI === true ? false : isColors.level,
-      update: false,
-      showStack: false,
-      gitignore: true,
-      ignore: [
-        '**/.nyc_output/**',
-        '**/node_modules/**',
-        '**/bower_components/**',
-        '**/flow-typed/**',
-        '**/snapshots/**',
-        '**/fixtures/**',
-        '**/coverage/**',
-        '**/helpers/**',
-        '**/support/**',
-        '**/.git',
-      ],
-      input: [
-        'test.{js,mjs,jsx}',
-        'test/**/*.{js,mjs,jsx}',
-        'test/*.{js,mjs,jsx}',
-        'tests/**/*.{js,mjs,jsx}',
-        '**/__tests__/**/*.{js,mjs,jsx}',
-        '**/*.test.{js,mjs,jsx}',
-        '**/*.spec.{js,mjs,jsx}',
-      ],
-    },
-  });
-}
-
-function createReporter(reporterOptions = {}) {
-  const { parsedArgv = {} } = reporterOptions;
-  return getReporter(parsedArgv)(reporterOptions);
-}
-
-function getCodeInfo({ parsedArgv = {}, content, filename, err }) {
-  let parts = err.stack.split('\n');
-
-  if (!/^(.*Error:|AssertionError)/.test(parts[0])) {
-    parts = parts.slice(1);
-  }
-
-  const firstLine = parts.shift();
-  const atLine = parts.filter((ln) => ln.includes(filename)).shift();
-
-  if (atLine) {
-    const filepath = atLine.slice(atLine.indexOf(' (') + 2, -1);
-    const p = filepath.slice(filename.length + 1).split(':');
-    const column = +p[p.length - 1];
-    const line = +p[p.length - 2];
-
-    const loc = { start: { line: +line, column: +column } };
-    /* istanbul ignore next */
-    const source = content || fs.readFileSync(filename, 'utf-8');
-    const opts = {
-      highlightCode: parsedArgv.color,
-      message: firstLine,
-    };
-
-    const sourceFrame = babelCode.codeFrameColumns(source, loc, opts);
-    const at = atLine.replace('file://', '').trim();
-
-    return { ok: true, sourceFrame, atLine: at };
-  }
-
-  return { ok: false };
-}
+export const hasProcess = process && typeof process === 'object';
 
 /* istanbul ignore next */
-function nextTick(fn) {
-  const promise = new Promise((resolve) => {
-    proc.nextTick(() => {
-      resolve(fn());
+async function importer(reporterName) {
+  let reporterFn = () => {};
+
+  const hasTranspile =
+    process.execArgv.includes('@babel/register') ||
+    process.execArgv.includes('esm') ||
+    false;
+
+  const path = hasTranspile ? await import('path') : require('path'); // eslint-disable-line global-require
+
+  const reporterPath = path.resolve('src', 'reporters', reporterName);
+
+  reporterFn = hasTranspile
+    ? await import(reporterPath)
+    : require('esm')(module)(reporterPath); // eslint-disable-line global-require
+
+  return reporterFn.default;
+}
+export const importReporter = importer;
+
+export const nextTick = (fn) => {
+  const promise = new Promise((resolve) => nextJob(resolve));
+
+  return (...args) => promise.then(() => fn(...args));
+};
+
+export const relativePath = (line) => {
+  /* istanbul ignore next */
+  if (!hasProcess) return line;
+
+  return line.replace(`${process.cwd()}/`, './');
+};
+
+export const outputError = (err, options) => {
+  const error = normalizeError(err, options);
+
+  options.writeLine('# FAIL!');
+  options.writeLine('#');
+
+  /* istanbul ignore next */
+  if (error.at) {
+    options.writeLine('# At:', error.at);
+    options.writeLine('#');
+  }
+
+  options.writeLine('# Message:', error.head);
+
+  /* istanbul ignore next */
+  if (error.message) {
+    options.writeLine(error.message);
+    options.writeLine('#');
+  }
+
+  return error;
+};
+
+export function normalizeError(error, options) {
+  let stack = [];
+  let str = error.stack;
+
+  /* istanbul ignore next */
+  if (!error.stack) {
+    str = '';
+  }
+
+  str
+    .split('\n')
+    .slice(1)
+    .filter((line) => line.trim().startsWith('at'))
+    .forEach((line) => {
+      const isInternal = nodeInternals.some(
+        (internal) =>
+          (!options.self && line.includes('asia') && /src|dist/.test(line)) ||
+          (line.includes('esm') && line.includes('esm.js')) ||
+          new RegExp(`\\(${internal}.+`).test(line),
+      );
+
+      if (!isInternal) {
+        /* istanbul ignore next */
+        const ln = options.relativePaths ? relativePath(line) : line;
+        stack.push(`  ${ln.trim()}`);
+      }
     });
-  });
 
-  return promise;
-}
+  const lines = error.message.split('\n');
 
-function createSnaps(parsedArgv, filename) {
-  if (!parsedArgv.snapshots) {
-    return null;
+  const message = lines
+    .slice(1)
+    .map((line) => `# ${line}`.trim())
+    .join('\n');
+
+  let at = null;
+
+  /* istanbul ignore next */
+  if (stack.length > 0) {
+    // eslint-disable-next-line prefer-destructuring
+    const firstLine = stack[0];
+
+    stack.unshift('STACK!');
+    stack = stack.map((x) => `# ${x}`.trim()).join('\n');
+
+    at = firstLine
+      .slice(1)
+      .trim()
+      .slice(3);
   }
 
-  const stemname = path.basename(filename, path.extname(filename));
-  const snapsdir = path.join(path.dirname(filename), 'snapshots');
-  const filesnap = path.join(snapsdir, `${stemname}.snapshot.json`);
-
-  let fileshots = {};
-
-  if (parsedArgv.update) {
-    rimraf.sync(snapsdir);
-  }
-
-  if (!fs.existsSync(snapsdir)) {
-    mkdirp.sync(snapsdir);
-  }
-  if (fs.existsSync(filesnap)) {
-    fileshots = JSON.parse(fs.readFileSync(filesnap, 'utf-8'));
-  }
-
-  return { filesnap, fileshots };
-}
-
-function createOnMessage(reporter) {
-  return function onmessage({ type, meta, data }) {
-    switch (type) {
-      case 'error':
-      case 'critical': {
-        reporter.emit(type, meta, data.reason);
-        break;
-      }
-
-      case 'before':
-      case 'after':
-      case 'beforeEach':
-      case 'afterEach':
-      case 'pass':
-      case 'fail':
-      case 'skip':
-      case 'todo': {
-        reporter.emit(type, meta, data);
-        break;
-      }
-
-      default: {
-        break;
-      }
-    }
+  return {
+    name: error.name,
+    head: lines[0],
+    message,
+    at,
+    stack: /* istanbul ignore next */ stack.length > 0 ? stack : null,
   };
 }
-
-module.exports = {
-  assert: Object.assign(assert, { nextTick }),
-  getReporter,
-  getParsedArgv,
-  getRelativePath,
-  getCodeInfo,
-  createReporter,
-  createOnMessage,
-  createSnaps,
-  isInstalled,
-};

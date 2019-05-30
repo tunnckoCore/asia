@@ -1,241 +1,308 @@
-'use strict';
+import parallel from 'p-map';
+import sequence from 'p-map-series';
+import mixinDeep from 'mixin-deep';
+import isObservable from 'is-observable';
+import observable2promise from 'observable-to-promise';
+import defaultReporter from './reporters/tap';
+import { nextTick, noopReporter, hasProcess, importReporter } from './utils';
 
-const fs = require('fs');
-const path = require('path');
-const mkdirp = require('mkdirp');
-const parallel = require('p-map');
-const globrex = require('globrex');
-const pReflect = require('p-reflect');
-const sequence = require('p-map-series');
-const cleanup = require('clean-stacktrace');
-const isObservable = require('is-observable');
-const observable2promise = require('observable-to-promise');
-const { assert } = require('./utils');
-
-/* eslint-disable promise/prefer-await-to-then, no-param-reassign */
-
-let testsCache = {};
-
-module.exports = (emit, apiOptions = {}, snapshots = {}) => {
-  const options = Object.assign({}, apiOptions);
-  const stats = { count: 0, pass: 0, fail: 0, todo: 0, skip: 0 };
-  const meta = { stats, ...Object.assign({}, snapshots) };
+/**
+ * Constructor which can be initialized with optional `options` object.
+ * On the `.test` method you can access the `skip` and `todo` methods.
+ * For example `.test.skip(title, fn)` and `.test.todo(title)`.
+ *
+ * This should be uses if you want to base something on top of the Asia API.
+ * By default, the main export e.g. just `'asia'` exposes a default export function,
+ * which is the `test()` method.
+ *
+ * @example
+ * import Asia from 'asia/dist/api/es';
+ *
+ * // or in CommonJS (Node.js)
+ * // const Asia = require('asia/dist/api/umd');
+ *
+ * const api = Asia({ serial: true });
+ * console.log(api);
+ * // => { test() {}, skip() {}, todo() {}, run() {} }
+ *
+ * api.test('awesome test', async () => {
+ *   await Promise.resolve(123);
+ * });
+ *
+ * api.test.skip('some skip test here', () => {
+ *   console.log('this will not log');
+ * });
+ * api.skip('same as above', () => {
+ *   console.log('this will not log');
+ * });
+ *
+ * api.test.todo('test without implementaton');
+ * api.todo('test without implementaton');
+ *
+ * api.run();
+ *
+ * @name  Asia
+ * @param {object} options control tests `concurrency` or pass `serial: true` to run serially.
+ * @returns {object} instance with `.test`, `.skip`, `.todo` and `.run` methods
+ * @public
+ */
+export default function Asia(options) {
+  const stats = { count: 0, anonymous: 0, pass: 0, fail: 0, skip: 0, todo: 0 };
+  const opts = mixinDeep(
+    {
+      args: [],
+      stats,
+      relativePaths: true,
+      proc: /* istanbul ignore next */ hasProcess ? process : {},
+      serial:
+        /* istanbul ignore next */ hasProcess && process.env.ASIA_SERIAL
+          ? Boolean(process.env.ASIA_SERIAL)
+          : false,
+      showStack:
+        /* istanbul ignore next */ hasProcess && process.env.ASIA_SHOW_STACK
+          ? Boolean(process.env.ASIA_SHOW_STACK)
+          : false,
+    },
+    options,
+  );
   const tests = [];
 
-  /* istanbul ignore if */
-  if (options.snapshots) {
-    if (meta.filesnap && fs.existsSync(meta.filesnap)) {
-      testsCache = JSON.parse(fs.readFileSync(meta.filesnap, 'utf-8'));
-      testsCache.exists = true;
-    }
-  }
+  /**
+   * Define a regular test with `title` and `fn`.
+   * Both `title` and `fn` params are required, otherwise it will throw.
+   * Optionally you can pass `settings` options object, to make it a "skip"
+   * or a "todo" test. For example `{ skip: true }`
+   *
+   * @example
+   * import assert from 'assert';
+   * import expect from 'expect';
+   * import test from 'asia';
+   *
+   * test('some awesome failing test', () => {
+   *   expect(1).toBe(2);
+   * });
+   *
+   * test('foo passing async test', async () => {
+   *   const res = await Promise.resolve(123);
+   *
+   *   assert.strictEqual(res, 123);
+   * });
+   *
+   * @name  test
+   * @param {string} title
+   * @param {function} fn
+   * @param {object} settings
+   * @public
+   */
+  function addTest(title, fn, settings) {
+    const opt = Object.assign({ skip: false, todo: false }, settings);
 
-  function asia(title, testFn, opts) {
+    if (typeof title === 'function') {
+      fn = title;
+      opts.stats.anonymous += 1;
+      title = `anonymous test ${opts.stats.anonymous}`;
+    }
+
     if (typeof title !== 'string') {
-      emit('error', meta, {
-        reason: new TypeError('expect `title` to be a string'),
-      });
-      return asia;
+      throw new TypeError('asia.test(): expect test `title` be string');
     }
-    if (typeof testFn !== 'function') {
-      emit('error', meta, {
-        reason: new TypeError('expect `testFn` to be function'),
-      });
-      return asia;
+    if (typeof fn !== 'function') {
+      throw new TypeError('asia.test(): expect test `fn` to be function');
     }
 
-    const extra = Object.assign({ skip: false, todo: false }, opts);
+    opts.stats.count += 1;
+    const id = opts.stats.count;
 
-    stats.count += 1;
+    if (opt.skip) opts.stats.skip += 1;
+    if (opt.todo) opts.stats.todo += 1;
 
-    const test = {
-      ...extra,
-      run: true,
-      isPending: true,
-      isRejected: false,
-      isFulfilled: false,
-      id: stats.count,
-      fn: testFn,
-      str: testFn.toString(),
-      title,
-    };
-
-    /* istanbul ignore if */
-    if (options.snapshots) {
-      if (!testsCache[title]) {
-        const { fn, ...rest } = test;
-        testsCache[title] = rest;
-      }
-      if (testsCache[title].str !== test.str) {
-        const cached = Object.assign({}, testsCache);
-        cached[title].str = test.str;
-        fs.writeFileSync(meta.filesnap, JSON.stringify(cached));
-
-        testsCache[title].run = true;
-      }
-    }
-
-    tests.push(test);
-    return asia;
+    Object.assign(fn, opt, { fn, stats: opts.stats, title, id, index: id });
+    tests.push(fn);
   }
 
-  asia.skip = (title, testFn) => {
-    stats.skip += 1;
-    return asia(title, testFn, { skip: true });
-  };
+  /**
+   * Define test with `title` and `fn` that will never run,
+   * but will be shown in the output.
+   *
+   * @example
+   * import test from 'asia';
+   *
+   * test.skip('should be skipped, but printed', () => {
+   *   throw Error('test function never run');
+   * });
+   *
+   * test.skip('should throw, because expect test implementation');
+   *
+   * @name  test.skip
+   * @param {string} title test title
+   * @param {function} fn test function implementaton
+   * @public
+   */
+  function addSkipTest(title, fn) {
+    addTest(title, fn, { skip: true });
+  }
 
-  asia.todo = (title, arg) => {
-    if (typeof arg === 'function') {
-      emit('error', meta, {
-        reason: new TypeError('test.todo does expect only title'),
-      });
-      return asia;
+  /**
+   * Define a test with `title` that will be marked as "todo" test.
+   * Such tests do not have test implementaton function, if `fn` is given
+   * than it will throw an error.
+   *
+   * @example
+   * import assert from 'assert';
+   * import test from 'asia';
+   *
+   * test.todo('should be printed and okey');
+   *
+   * test.todo('should throw, because does not expect test fn', () => {
+   *   assert.ok(true);
+   * });
+   *
+   * @name  test.todo
+   * @param {string} title title of the "todo" test
+   * @param {function} fn do not pass test implementaton function
+   * @public
+   */
+  function addTodoTest(title, fn) {
+    if (typeof fn === 'function') {
+      throw new TypeError('asia.test.todo(): do NOT expect test `fn`');
     }
-
     /* istanbul ignore next */
-    function fakeFn() {}
+    const fakeFn = () => {};
 
-    stats.todo += 1;
-    return asia(title, fakeFn, { todo: true });
-  };
+    addTest(title, fakeFn, { todo: true });
+  }
 
-  // TODO: think and re-introduce
-  // asia.before = (fn) => {
-  //   reporter.on('before', fn);
-  //   return asia;
-  // };
-  // asia.beforeEach = (fn) => {
-  //   reporter.on('beforeEach', fn);
-  //   return asia;
-  // };
-  // asia.afterEach = (fn) => {
-  //   reporter.on('afterEach', fn);
-  //   return asia;
-  // };
-  // asia.after = (fn) => {
-  //   reporter.on('after', fn);
-  //   return asia;
-  // };
+  addTest.test = addTest;
+  addTest.skip = addSkipTest;
+  addTest.todo = addTodoTest;
 
-  asia.run = () => {
-    const flowFn = options.concurrency > 1 ? parallel : sequence;
-    const mapper = createMapper({ meta, emit, options });
-
-    let testsToRun = tests;
-
-    /* istanbul ignore if */
-    if (options.match && typeof options.match !== 'string') {
-      const error = new TypeError('options.match should be string, when given');
-
-      emit('error', meta, { reason: error });
-      return Promise.reject(error);
-    }
-
-    if (typeof options.match === 'string' && options.match.length > 1) {
-      const { regex } = globrex(options.match);
-      testsToRun = tests.filter(
-        (t) => t.title.includes(options.match) || regex.test(t.title),
-      );
-    }
-
-    emit('before', meta);
-    return flowFn(testsToRun, mapper, options).then((results) => {
-      /* istanbul ignore if */
-      if (options.snapshots) {
-        if (meta.filesnap && !fs.existsSync(meta.filesnap)) {
-          mkdirp.sync(path.dirname(meta.filesnap));
-          fs.writeFileSync(meta.filesnap, JSON.stringify(testsCache));
-        }
-      }
-
-      const meth = { ...meta, results };
-
-      emit('after', meth);
-      return meth;
-    });
-  };
-
-  return asia;
-};
-
-function createMapper({ meta, emit, options }) {
-  return function mapper(test) {
-    // TODO: fix, does not work correctly when in parallel
-    emit('beforeEach', meta, test);
-
-    const done = createDone({ meta, emit, test, options, same: false });
-    const cached = testsCache[test.title];
-
-    let promise = Promise.resolve();
-
-    /* istanbul ignore if */
-    if (options.snapshots) {
-      if (testsCache.exists === true && cached.run === false) {
-        return pReflect(promise).then(
-          createDone({ meta, emit, test: cached, options, same: true }),
-        );
-      }
-    }
-
-    if (!test.skip && !test.todo) {
-      promise = new Promise((resolve) => {
-        const result = test.fn(assert);
-
-        if (isObservable(result)) {
-          resolve(observable2promise(result));
-        } else {
-          resolve(result);
-        }
-      });
-    }
-
-    return pReflect(promise).then(done);
+  return {
+    test: addTest,
+    skip: addSkipTest,
+    todo: addTodoTest,
+    run: createRun(tests, opts),
   };
 }
 
-/* eslint-disable max-statements */
-function createDone({ meta, emit, test: t, options, same }) {
-  return function ondone(result) {
-    let test = null;
+function createRun(tests, opts) {
+  /**
+   * Run all tests, with optional `settings` options, merged with those
+   * passed from the constructor.
+   * Currently the supported options are `serial` and `concurrency`.
+   *
+   * @example
+   * import delay from 'delay';
+   * import Asia from 'asia/dist/api/es';
+   *
+   * const api = Asia({ serial: true });
+   *
+   * api.test('first test', async () => {
+   *   await delay(1000);
+   *   console.log('one');
+   * });
+   *
+   * api.test('second test', () => {
+   *   console.log('two');
+   * });
+   *
+   * api.run({ concurrency: 10 });
+   *
+   * @name  .run
+   * @param {object} settings for example, pass `serial: true` to run the tests serially
+   * @return {Promise}
+   * @public
+   */
+  return nextTick(async (settings) => {
+    const options = mixinDeep({}, opts, settings);
+    const flow = options.serial ? sequence : parallel;
+    const results = [];
+    let reporter = defaultReporter({ tests, options });
 
-    /* istanbul ignore if */
-    if (same) {
-      test = testsCache[t.title];
-    } else {
-      test = Object.assign({}, t, result, { isPending: false });
+    if (typeof options.reporter === 'function') {
+      reporter = Object.assign(
+        {},
+        noopReporter,
+        options.reporter({ tests, options }),
+      );
     }
 
-    const { reason, ...testObject } = test;
-
-    /* istanbul ignore if */
-    if (options.snapshots) {
-      testsCache[test.title] = testObject;
-      testsCache[test.title].run = false;
+    /* istanbul ignore next */
+    if (typeof options.reporter === 'string' && hasProcess) {
+      const reporterFn = await importReporter(options.reporter);
+      reporter = Object.assign(
+        {},
+        noopReporter,
+        reporterFn({ tests, options }),
+      );
     }
 
-    if (test.isRejected) {
-      meta.stats.fail += 1;
-
-      test.reason.stack = cleanup(test.reason.stack);
-      emit('fail', meta, test);
-
-      /* istanbul ignore if */
-      if (options.snapshots) {
-        testsCache[test.title].reason = { stack: reason && reason.stack };
-      }
+    /* istanbul ignore next */
+    if (typeof options.writeLine !== 'function') {
+      options.writeLine = console.log;
     }
-    if (test.isFulfilled) {
-      if (test.skip) {
-        emit('skip', meta, test);
-      } else if (test.todo) {
-        emit('todo', meta, test);
+
+    await reporter.before(options);
+
+    return flow(
+      tests,
+      (item) =>
+        // For each test -> run 3 steps, always serially
+        sequence(
+          [
+            // Step 1: Before each test
+            () => reporter.beforeEach(item, options),
+
+            // Step 2: Run the test function
+            stepTwo(item, options),
+
+            // Step 3: After each test function
+            () => reporter.afterEach(item, options),
+          ],
+          (step) => step(),
+        ).then((steps) => {
+          // Always get the middle step result
+          results.push(steps[1]);
+        }),
+      options,
+    ).then(async () => {
+      await reporter.after(options, results);
+      return { options, results, tests };
+    });
+  });
+}
+
+async function stepTwo(item, options) {
+  return async () => {
+    if (!item.skip && !item.todo) {
+      const { value, reason } = await runTest(item, options.args);
+
+      item.value = value;
+      item.reason = reason;
+      if (item.reason) {
+        item.fail = true;
+        item.pass = false;
+        item.stats.fail += 1;
       } else {
-        meta.stats.pass += 1;
-        emit('pass', meta, test);
+        item.fail = false;
+        item.pass = true;
+        item.stats.pass += 1;
       }
     }
-
-    emit('afterEach', meta, test);
-    return test;
+    options.stats = Object.assign({}, options.stats, item.stats);
+    return item;
   };
+}
+
+async function runTest(item, args) {
+  let value = null;
+  let reason = null;
+
+  try {
+    const val = await item.fn.apply(null, args);
+    value = isObservable(val) ? await observable2promise(val) : val;
+  } catch (err) {
+    reason = err;
+  }
+
+  return { value, reason };
 }

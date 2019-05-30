@@ -1,0 +1,20 @@
+{
+  "statements": 60,
+  "branches": 40,
+  "functions": 60,
+  "lines": 60,
+  "cache": true,
+  "check-coverage": true,
+  "require": "esm",
+  "reporter": [
+    "lcov",
+    "text"
+  ],
+  "include": [
+    "src/**/*.js"
+  ],
+  "exclude": [
+    "test",
+    "src/node-internals.js"
+  ]
+}
