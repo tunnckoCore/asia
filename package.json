@@ -36,7 +36,7 @@
     "observable-to-promise": "^1.0.0",
     "p-map": "^2.0.0",
     "p-map-series": "^2.0.0",
-    "p-reflect": "^1.0.0",
+    "p-reflect": "^2.0.0",
     "pretty-ms": "^3.2.0",
     "rimraf": "^2.6.2",
     "serialize-error": "^2.1.0",

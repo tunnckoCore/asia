@@ -2725,6 +2725,10 @@ p-reflect@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/p-reflect/-/p-reflect-1.0.0.tgz#f4fa1ee1bb546d8eb3ec0321148dfe0a79137bb8"
 
+p-reflect@^2.0.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/p-reflect/-/p-reflect-2.1.0.tgz#5d67c7b3c577c4e780b9451fc9129675bd99fe67"
+
 p-try@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/p-try/-/p-try-1.0.0.tgz#cbc79cdbaf8fd4228e13f621f2b1a237c1b207b3"
