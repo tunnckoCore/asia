@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@babel/code-frame": "^7.0.0-beta.52",
-    "ansi-colors": "^3.0.0",
+    "ansi-colors": "^4.0.0",
     "arrayify": "^1.0.0",
     "clean-stacktrace": "^1.1.0",
     "fast-glob": "^3.0.0",
